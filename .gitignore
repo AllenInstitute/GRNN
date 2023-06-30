@@ -3,3 +3,4 @@
 .ipynb_checkpoints/
 data/
 figures/
+__pycache__/

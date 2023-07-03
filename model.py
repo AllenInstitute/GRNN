@@ -7,13 +7,21 @@ class FiringRateModel(torch.nn.Module):
     def __init__(
         self, 
         g, # activation function
-        k: int = 0 # number of previous timesteps for current I
+        k: int = 0, # number of previous timesteps for current I
+        l: int = 0, # number of previous timesteps for firing rate
+        static_actv: bool = True
     ):
         super().__init__()
         self.g = g
         self.a = torch.nn.Parameter(torch.ones(k) * 1e-1)
         self.b = torch.nn.Parameter(torch.randn(1)[0])
         self.k = k
+        self.l = l
+        
+        # freeze activation parameters
+        if static_actv:
+            for _, p in self.g.named_parameters():
+                p.requires_grad = False
         
     def forward(
         self,
@@ -97,7 +105,10 @@ def train_model(
     fs_tr,
     k: int,
     epochs: int = 100,
-    print_every: int = 10
+    print_every: int = 10,
+    loss_fn = "huber",
+    bin_size = 20,
+    up_factor = 10,
 ):
     for epoch in range(epochs):
         total_loss = 0
@@ -106,9 +117,14 @@ def train_model(
             loss = 0
             n = 0
             for i in range(k+1, len(currents)):
+                # up-weight loss for non-zero firing rate
+                w = up_factor if firing_rates[i] > 0 else 1
                 currs = currents[i-k:i+1]
                 f = model(currs, f)
-                loss += criterion(f, firing_rates[i])
+                if loss_fn == "poisson":
+                    loss += w * criterion(f * bin_size, firing_rates[i] * bin_size)
+                else:
+                    loss += w * criterion(f, firing_rates[i])
                 n += 1
             optimizer.zero_grad()
             loss.backward(retain_graph=True)

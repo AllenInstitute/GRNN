@@ -8,31 +8,30 @@ class FiringRateModel(torch.nn.Module):
         self, 
         g, # activation function
         k: int = 0, # number of previous timesteps for current I
-        l: int = 0, # number of previous timesteps for firing rate
-        static_actv: bool = True
+        l: int = 0, # number of timesteps for firing rate
+        static_g: bool = True
     ):
         super().__init__()
         self.g = g
-        self.a = torch.nn.Parameter(torch.ones(k) * 1e-1)
-        self.b = torch.nn.Parameter(torch.randn(1)[0])
+        self.a = torch.nn.Parameter(torch.randn(k) * 1e-1)
+        self.b = torch.nn.Parameter(torch.randn(l) * 1e-1)
         self.k = k
         self.l = l
         
         # freeze activation parameters
-        if static_actv:
+        if static_g:
             for _, p in self.g.named_parameters():
                 p.requires_grad = False
         
     def forward(
         self,
-        currents, # currents tensor, size k+1
-        prev_f # previous firing rate
+        currents, # currents tensor, size k+1 (t-k,...,t)
+        fs # firing rates, size l (t-l,...,t-1)
     ):
         if self.k > 0:
-            x = currents[:-1] @ self.a
-            return self.g(currents[-1] + x - self.b * prev_f)
+            return self.g(currents[-1] + self.a @ currents[:-1] - self.b @ fs)
         else:
-            return self.g(currents[0] - self.b * prev_f)
+            return self.g(currents[0] - self.b @ fs)
 
 class PolynomialActivation(torch.nn.Module):
     def __init__(self):
@@ -103,29 +102,32 @@ def train_model(
     optimizer,
     Is_tr,
     fs_tr,
-    k: int,
     epochs: int = 100,
     print_every: int = 10,
     loss_fn = "huber",
     bin_size = 20,
     up_factor = 10,
 ):
+    k, l = model.k, model.l
     for epoch in range(epochs):
         total_loss = 0
         for currents, firing_rates in zip(Is_tr, fs_tr):
-            f = firing_rates[0] # initialize firing rate to t=0
+            pred_fs = firing_rates[:max(k, l)]
             loss = 0
-            n = 0
-            for i in range(k+1, len(currents)):
+            for i in range(max(k, l), len(currents)):
                 # up-weight loss for non-zero firing rate
                 w = up_factor if firing_rates[i] > 0 else 1
                 currs = currents[i-k:i+1]
-                f = model(currs, f)
+                fs = pred_fs[i-l:i]
+                #print(pred_fs, fs, model.b)
+                f = model(currs, fs)
+                pred_fs = torch.cat((pred_fs, f.reshape(1)))
+
                 if loss_fn == "poisson":
                     loss += w * criterion(f * bin_size, firing_rates[i] * bin_size)
                 else:
                     loss += w * criterion(f, firing_rates[i])
-                n += 1
+                
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion

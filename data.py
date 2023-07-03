@@ -1,13 +1,19 @@
 import os
 import pickle
 
-def load_data():
+def load_data(with_zero=False):
+    # with_zero = load data with leading zeros not removed
+    if with_zero:
+        path = "data/processed_data_zero/"
+    else:
+        path = "data/processed_data/"
+
     data = {}
-    for f in os.listdir("data/processed_data"):
-        if os.path.isfile("data/processed_data/" + f):
+    for f in os.listdir(path):
+        if os.path.isfile(path + f):
             if f.split(".")[1] == "pickle":
                 cell_id = int(f.split(".")[0].split("_")[-1])
-                with open("data/processed_data/" + f, "rb") as file:
+                with open(path + f, "rb") as file:
                     file_data = pickle.load(file)
                     data[cell_id] = file_data
                     

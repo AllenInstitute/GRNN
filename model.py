@@ -32,6 +32,20 @@ class FiringRateModel(torch.nn.Module):
             return self.g(currents[-1] + self.a @ currents[:-1] - self.b @ fs)
         else:
             return self.g(currents[0] - self.b @ fs)
+        
+    def predict(self, Is):
+        k, l = self.k, self.l
+        pad = max(k, l)
+        Is_pad = F.pad(Is, (pad, 0), "constant")
+        with torch.no_grad():
+            fs = torch.zeros(pad)
+            pred_fs = []
+            for i in range(pad, len(Is_pad)):
+                currs = Is_pad[i-k:i+1]
+                f = self(currs, fs[i-l:i])
+                fs = torch.cat((fs, f.reshape(1)))
+                pred_fs.append(f)
+        return np.array([f.item() for f in pred_fs])
 
 class PolynomialActivation(torch.nn.Module):
     def __init__(self):

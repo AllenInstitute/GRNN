@@ -9,14 +9,16 @@ class FiringRateModel(torch.nn.Module):
         g, # activation function
         k: int = 0, # number of previous timesteps for current I
         l: int = 0, # number of timesteps for firing rate
+        a = None,
+        b = None,
         static_g: bool = True
     ):
         super().__init__()
         self.g = g
-        self.a = torch.nn.Parameter(torch.randn(k) * 1e-1)
-        self.b = torch.nn.Parameter(torch.randn(l) * 1e-1)
         self.k = k
         self.l = l
+        self.a = torch.nn.Parameter(torch.zeros(k) if a is None else a)
+        self.b = torch.nn.Parameter(torch.zeros(l) if b is None else b)
         
         # freeze activation parameters
         if static_g:
@@ -32,7 +34,25 @@ class FiringRateModel(torch.nn.Module):
             return self.g(currents[-1] + self.a @ currents[:-1] - self.b @ fs)
         else:
             return self.g(currents[0] - self.b @ fs)
-        
+    
+    def init_from_params(self, params):
+        self.a = torch.nn.Parameter(params["a"])
+        self.b = torch.nn.Parameter(params["b"])
+        self.g = PolynomialActivation()
+        self.g.init_from_params(params["g"])
+        self.k = len(self.a)
+        self.l = len(self.b)
+
+        for _, p in self.g.named_parameters():
+            p.requires_grad = False
+
+    def get_params(self):
+        return {
+            "a": self.a.clone(),
+            "b": self.b.clone(),
+            "g": self.g.get_params()
+        }
+
     def predict(self, Is):
         k, l = self.k, self.l
         pad = max(k, l)
@@ -81,28 +101,33 @@ class PolynomialActivation(torch.nn.Module):
     def init_from_file(self, filename):
         try:
             with open(filename, "rb") as file:
-                d = pickle.load(file)
+                params = pickle.load(file)
         except:
             print("Error")
         finally:
-            self.max_current = d["max_current"]
-            self.max_firing_rate = d["max_firing_rate"]
-            self.poly_coeff = d["poly_coeff"]
-            self.b = d["b"]
-            self.C = d["C"]
-            self.degree = len(self.poly_coeff) - 1
-            self.p = torch.tensor([d for d in range(self.degree+1)])
-            self.p = torch.nn.Parameter(self.p, requires_grad=False)
-        
-    def save_params(self, filename):
-        d = {
+            self.init_from_params(params)
+
+    def init_from_params(self, params):
+        self.max_current = params["max_current"]
+        self.max_firing_rate = params["max_firing_rate"]
+        self.poly_coeff = params["poly_coeff"]
+        self.b = params["b"]
+        self.C = params["C"]
+        self.degree = len(self.poly_coeff) - 1
+        self.p = torch.tensor([d for d in range(self.degree+1)])
+        self.p = torch.nn.Parameter(self.p, requires_grad=False)
+    
+    def get_params(self):
+        return {
             "max_current": self.max_current,
             "max_firing_rate": self.max_firing_rate,
             "poly_coeff": self.poly_coeff,
             "b": self.b,
             "C": self.C
         }
-        
+
+    def save_params(self, filename):
+        d = self.get_params()
         with open(filename, 'wb') as handle:
             pickle.dump(d, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -122,6 +147,7 @@ def train_model(
     bin_size = 20,
     up_factor = 10,
 ):
+    losses = []
     k, l = model.k, model.l
     for epoch in range(epochs):
         total_loss = 0
@@ -147,9 +173,11 @@ def train_model(
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion
             optimizer.step()
             total_loss += loss.item()
-        
+
+        losses.append(total_loss)
         if (epoch+1) % print_every == 0:
             print(f"Epoch {epoch+1} / Loss: {total_loss}")
+    return losses
 
 def fit_activation(
     actv,

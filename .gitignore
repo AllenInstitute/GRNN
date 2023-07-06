@@ -4,3 +4,4 @@
 data/
 figures/
 __pycache__/
+*.backup

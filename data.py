@@ -1,6 +1,7 @@
 import os
 import pickle
 import torch
+import numpy as np
 
 def load_data(with_zero=False):
     # with_zero = load data with leading zeros not removed
@@ -40,6 +41,8 @@ def preprocess_data(data, cell_id, bin_size=10):
 
 def get_train_test_data(data, cell_id, bin_size, device=None):
     Is_tr, fs_tr, Is_te, fs_te = tuple([] for _ in range(4))
+    labels = []
+    counts = {}
     for sweep in data[cell_id][:-1]:
         stim_name = sweep["stimulus_name"]
         Is = torch.tensor(sweep["current"][bin_size], device=device)
@@ -48,6 +51,14 @@ def get_train_test_data(data, cell_id, bin_size, device=None):
             Is_te.append(Is)
             fs_te.append(fs)
         elif stim_name != "Test":
+            if stim_name not in counts:
+                counts[stim_name] = 0
+            counts[stim_name] += 1
             Is_tr.append(Is)
             fs_tr.append(fs)
-    return Is_tr, fs_tr, Is_te, fs_te
+            labels.append(stim_name)
+    num_stims = len(counts.keys())
+    for stim in counts:
+        counts[stim] = 1 / (num_stims * counts[stim])
+    ws = list(map(lambda l: counts[l], labels))
+    return Is_tr, fs_tr, Is_te, fs_te, ws

@@ -146,17 +146,20 @@ def train_model(
     loss_fn = "huber",
     bin_size = 20,
     up_factor = 10,
+    ws = None
 ):
+    if ws is None:
+        ws = [1 for _ in range(len(Is_tr))]
     losses = []
     k, l = model.k, model.l
     for epoch in range(epochs):
         total_loss = 0
-        for currents, firing_rates in zip(Is_tr, fs_tr):
+        for currents, firing_rates, w in zip(Is_tr, fs_tr, ws):
             pred_fs = firing_rates[:max(k, l)]
             loss = 0
             for i in range(max(k, l), len(currents)):
                 # up-weight loss for non-zero firing rate
-                w = up_factor if firing_rates[i] > 0 else 1
+                m = up_factor if firing_rates[i] > 0 else 1
                 currs = currents[i-k:i+1]
                 fs = pred_fs[i-l:i]
                 #print(pred_fs, fs, model.b)
@@ -164,15 +167,15 @@ def train_model(
                 pred_fs = torch.cat((pred_fs, f.reshape(1)))
 
                 if loss_fn == "poisson":
-                    loss += w * criterion(f * bin_size, firing_rates[i] * bin_size)
+                    loss += m * criterion(f * bin_size, firing_rates[i] * bin_size)
                 else:
-                    loss += w * criterion(f, firing_rates[i])
+                    loss += m * criterion(f, firing_rates[i])
                 
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion
             optimizer.step()
-            total_loss += loss.item()
+            total_loss += w * loss.item()
 
         losses.append(total_loss)
         if (epoch+1) % print_every == 0:

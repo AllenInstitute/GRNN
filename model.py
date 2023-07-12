@@ -3,22 +3,33 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
+from utils import compute_derivative
+
 class FiringRateModel(torch.nn.Module):
     def __init__(
         self, 
         g, # activation function
         k: int = 0, # number of previous timesteps for current I
         l: int = 0, # number of timesteps for firing rate
-        a = None,
-        b = None,
+        m: int = 0, # include current derivatives up to order m
+        n: int = 0, # include firing rate derivatives up to order n
+        bin_size = 0,
         static_g: bool = True
     ):
         super().__init__()
         self.g = g
         self.k = k
         self.l = l
-        self.a = torch.nn.Parameter(torch.zeros(k) if a is None else a)
-        self.b = torch.nn.Parameter(torch.zeros(l) if b is None else b)
+        self.m = m
+        self.n = n
+        self.a = torch.nn.Parameter(torch.zeros(k))
+        self.b = torch.nn.Parameter(torch.zeros(l))
+        self.c = torch.nn.Parameter(torch.zeros(m))
+        self.d = torch.nn.Parameter(torch.zeros(n))
+
+        assert bin_size > 0
+        self.bin_size = bin_size
+        self.dt = bin_size / 1000
         
         # freeze activation parameters
         if static_g:
@@ -27,14 +38,20 @@ class FiringRateModel(torch.nn.Module):
         
     def forward(
         self,
-        currents, # currents tensor, size k+1 (t-k,...,t)
-        fs # firing rates, size l (t-l,...,t-1)
+        currents, # currents tensor, up to time t
+        fs # firing rates, up to time t-1
     ):
-        if self.k > 0:
-            return self.g(currents[-1] + self.a @ currents[:-1] - self.b @ fs)
-        else:
-            return self.g(currents[0] - self.b @ fs)
+        dIs = torch.tensor([compute_derivative(currents, i, self.dt) for i in range(1, self.m+1)])
+        dfs = torch.tensor([compute_derivative(fs, i, self.dt) for i in range(1, self.n+1)])
+        x = 1000 * self.b @ (fs[-self.l:] if self.l > 0 else torch.tensor([]))
+        y = self.c @ dIs
+        z = self.d @ dfs
+        w = x + y + z
+        return self.g(currents[-1] + self.a @ currents[-self.k-1:-1] + w)
     
+    def norm(self, p=1):
+        return torch.sum(torch.tensor([torch.norm(x, p=p) for x in [self.a, self.b, self.c, self.d]]))
+
     def init_from_params(self, params):
         self.a = torch.nn.Parameter(params["a"])
         self.b = torch.nn.Parameter(params["b"])
@@ -50,22 +67,32 @@ class FiringRateModel(torch.nn.Module):
         return {
             "a": self.a.clone(),
             "b": self.b.clone(),
-            "g": self.g.get_params()
+            "c": self.c.clone(),
+            "d": self.d.clone(),
+            "g": self.g.get_params() if callable(getattr(self.g, "get_params", None)) else []
         }
 
-    def predict(self, Is):
-        k, l = self.k, self.l
-        pad = max(k, l)
+    def predict(self, Is, closed=True, fs=None):
+        k, l, m, n = self.k, self.l, self.m, self.n
+        pad = max(k, l, m, n)
         Is_pad = F.pad(Is, (pad, 0), "constant")
-        with torch.no_grad():
-            fs = torch.zeros(pad)
-            pred_fs = []
-            for i in range(pad, len(Is_pad)):
-                currs = Is_pad[i-k:i+1]
-                f = self(currs, fs[i-l:i])
-                fs = torch.cat((fs, f.reshape(1)))
-                pred_fs.append(f)
-        return np.array([f.item() for f in pred_fs])
+        
+        if closed:
+            with torch.no_grad():
+                fs1 = torch.zeros(pad)
+                pred_fs = []
+                for i in range(pad, len(Is_pad)):
+                    f = self.forward(Is_pad[:i+1], fs1[:i])
+                    fs1 = torch.cat((fs1, f.reshape(1)))
+                    pred_fs.append(f)
+            return np.array([f.item() for f in pred_fs])
+        else:
+            with torch.no_grad():
+                pred_fs = []
+                for i in range(pad, len(Is_pad)):
+                    f = self.forward(Is_pad[:i+1], fs[:i])
+                    pred_fs.append(f)
+            return np.array([f.item() for f in pred_fs])
 
 class PolynomialActivation(torch.nn.Module):
     def __init__(self):

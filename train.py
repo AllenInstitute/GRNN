@@ -11,40 +11,52 @@ def train_model(
     loss_fn = "huber",
     bin_size = 20,
     up_factor = 10,
-    ws = None
+    ws = None,
+    closed = True,
+    C = 0,
+    scheduler = None
 ):
     if ws is None:
         ws = [1 for _ in range(len(Is_tr))]
     losses = []
-    k, l = model.k, model.l
+    k, l, m, n = model.k, model.l, model.m, model.n
+    p = max(k, l, m, n)
     for epoch in range(epochs):
         total_loss = 0
         for currents, firing_rates, w in zip(Is_tr, fs_tr, ws):
-            pred_fs = firing_rates[:max(k, l)]
             loss = 0
-            for i in range(max(k, l), len(currents)):
-                # up-weight loss for non-zero firing rate
-                m = up_factor if firing_rates[i] > 0 else 1
-                currs = currents[i-k:i+1]
-                fs = pred_fs[i-l:i]
-                #print(pred_fs, fs, model.b)
-                f = model(currs, fs)
-                pred_fs = torch.cat((pred_fs, f.reshape(1)))
-
-                if loss_fn == "poisson":
-                    loss += m * criterion(f * bin_size, firing_rates[i] * bin_size)
+            pred_fs = firing_rates[:p]
+            for i in range(p, len(currents)):
+                if closed:
+                    fs = pred_fs[:i]
+                    f = model(currents[:i+1], fs)
+                    pred_fs = torch.cat((pred_fs, f.reshape(1)))
                 else:
-                    loss += m * criterion(f, firing_rates[i])
+                    f = model(currents[:i+1], firing_rates[:i])
                 
+                # up-weight loss for non-zero firing rate
+                alpha = up_factor if firing_rates[i] > 0 or f > 0 else 1
+                if loss_fn == "poisson":
+                    loss += alpha * criterion(f * bin_size, firing_rates[i] * bin_size)
+                else:
+                    loss += alpha * criterion(f, firing_rates[i])
+            loss += C * model.norm(p=1)
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion
             optimizer.step()
             total_loss += w * loss.item()
-
+        if scheduler is not None:
+            scheduler.step()
         losses.append(total_loss)
         if (epoch+1) % print_every == 0:
-            print(f"Epoch {epoch+1} / Loss: {total_loss}")
+            if scheduler is None:
+                print(f"Epoch {epoch+1} / Loss: {total_loss}")
+            else:
+                curr_lr = scheduler.get_last_lr()
+                print(f"Epoch {epoch+1} / Loss: {total_loss} / lr: {curr_lr}")
+        if len(losses) >= 3 and losses[-1] == losses[-2] == losses[-3]:
+            return losses
     return losses
 
 def fit_activation(

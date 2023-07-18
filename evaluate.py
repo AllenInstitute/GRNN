@@ -14,7 +14,7 @@ def explained_variance_ratio(model, Is_te, fs_te, bin_size, quantize=False):
     psth_d = np.mean(fs_te_np, axis=0)
     ev_d = np.mean([explained_variance(stpsth, psth_d) for stpsth in fs_te_np])
     
-    psth_m = model.predict(Is_te[0])
+    psth_m, _ = model.predict(Is_te[0])
     if quantize:
         psth_m = quantize_prediction(psth_m, bin_size)
     pwev_dm = np.mean([explained_variance(stpsth, psth_m) for stpsth in fs_te_np])

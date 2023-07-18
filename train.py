@@ -23,6 +23,7 @@ def train_model(
     for epoch in range(epochs):
         total_loss = 0
         for currents, firing_rates, w in zip(Is_tr, fs_tr, ws):
+            model.reset()
             loss = 0
             pred_fs = firing_rates[:p]
             for i in range(p, len(currents)):

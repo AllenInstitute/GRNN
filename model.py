@@ -121,14 +121,16 @@ class PolynomialActivation(torch.nn.Module):
         
         x1, x2, y1, y2 = tuple([torch.tensor(0.0)] * 4)
         xs, ys = map(list, zip(*sorted(zip(Is, fs), key=lambda x: x[0])))
-        x2, y2 = xs[-1], ys[-1]
+        i = np.argmax(ys)
+        x2, y2 = xs[i], ys[i]
         for i in range(0, len(ys)):
-            if ys[i] > 0:
-                x1, y1 = xs[i], ys[i]
+            if ys[i] > 0.01:
+                x1, y1 = (xs[i-1], ys[i-1]) if i - 1 > 0 else (xs[i], ys[i])
                 break
         self.b = torch.nn.Parameter(x1.clone())
         self.poly_coeff = torch.ones(self.degree + 1) * 1e-1 # to make sure there is some gradient
         self.poly_coeff[1] = (y2 - y1) / (x2 - x1) * self.max_current * torch.abs(torch.randn(1)[0] * 7 + 10)
+        print(self.poly_coeff[1])
         self.poly_coeff = torch.nn.Parameter(self.poly_coeff)
         
     def init_from_file(self, filename):

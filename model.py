@@ -3,16 +3,12 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from utils import compute_derivative
-
 class FiringRateModel(torch.nn.Module):
     def __init__(
         self, 
         g, # activation function
         k: int = 0, # number of previous timesteps for current I
         l: int = 0, # number of timesteps for firing rate
-        m: int = 0, # include current derivatives up to order m
-        n: int = 0, # include firing rate derivatives up to order n
         bin_size = 0,
         static_g: bool = True
     ):
@@ -20,12 +16,8 @@ class FiringRateModel(torch.nn.Module):
         self.g = g
         self.k = k
         self.l = l
-        self.m = m
-        self.n = n
         self.a = torch.nn.Parameter(torch.zeros(k))
         self.b = torch.nn.Parameter(torch.zeros(l))
-        self.c = torch.nn.Parameter(torch.zeros(m))
-        self.d = torch.nn.Parameter(torch.zeros(n))
 
         assert bin_size > 0
         self.bin_size = bin_size
@@ -41,16 +33,21 @@ class FiringRateModel(torch.nn.Module):
         currents, # currents tensor, up to time t
         fs # firing rates, up to time t-1
     ):
-        dIs = torch.tensor([compute_derivative(currents, i, self.dt) for i in range(1, self.m+1)])
-        dfs = torch.tensor([compute_derivative(fs, i, self.dt) for i in range(1, self.n+1)])
-        x = 1000 * self.b @ (fs[-self.l:] if self.l > 0 else torch.tensor([]))
-        y = self.c @ dIs
-        z = self.d @ dfs
-        w = x + y + z
-        return self.g(currents[-1] + self.a @ currents[-self.k-1:-1] + w)
+        x = currents[-1] + self.a @ currents[-self.k-1:-1]
+        y = 1000 * self.b @ (fs[-self.l:] if self.l > 0 else torch.tensor([]))
+        return self.g(x + y)
     
     def norm(self, p=1):
-        return torch.sum(torch.tensor([torch.norm(x, p=p) for x in [self.a, self.b, self.c, self.d]]))
+        return torch.sum(torch.tensor([torch.norm(x, p=p) for x in [self.a, self.b]]))
+    
+    def smoothness_reg(self):
+        a = torch.cat([torch.tensor([0.0]), self.a])
+        b = torch.cat([torch.tensor([0.0]), self.b])
+        i = torch.arange(len(self.a), 0, -1).to(torch.float32)
+        j = torch.arange(len(self.b), 0, -1).to(torch.float32)
+        smooth_a = (torch.diff(a) ** 2) @ (i ** 2) / len(self.a)
+        smooth_b = (torch.diff(b) ** 2) @ (j ** 2) / len(self.b)
+        return smooth_a + smooth_b
 
     def init_from_params(self, params):
         self.a = torch.nn.Parameter(params["a"])
@@ -67,14 +64,12 @@ class FiringRateModel(torch.nn.Module):
         return {
             "a": self.a.clone(),
             "b": self.b.clone(),
-            "c": self.c.clone(),
-            "d": self.d.clone(),
             "g": self.g.get_params() if callable(getattr(self.g, "get_params", None)) else []
         }
 
     def predict(self, Is, closed=True, fs=None):
-        k, l, m, n = self.k, self.l, self.m, self.n
-        pad = max(k, l, m, n)
+        k, l = self.k, self.l
+        pad = max(k, l)
         Is_pad = F.pad(Is, (pad, 0), "constant")
         
         if closed:
@@ -100,7 +95,6 @@ class PolynomialActivation(torch.nn.Module):
         
     def forward(self, z):
         x = (z - self.b) / self.max_current
-        #poly = F.relu(self.poly_coeff) @ x.pow(self.p) # relu to ensure monotonicity
         poly = (self.poly_coeff ** 2) @ x.pow(self.p)
         tan = self.max_firing_rate * F.tanh(poly) # ceil is the max firing rate
         return F.relu(tan)

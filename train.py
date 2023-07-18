@@ -8,7 +8,6 @@ def train_model(
     fs_tr,
     epochs: int = 100,
     print_every: int = 10,
-    loss_fn = "huber",
     bin_size = 20,
     up_factor = 10,
     ws = None,
@@ -19,8 +18,8 @@ def train_model(
     if ws is None:
         ws = [1 for _ in range(len(Is_tr))]
     losses = []
-    k, l, m, n = model.k, model.l, model.m, model.n
-    p = max(k, l, m, n)
+    k, l = model.k, model.l
+    p = max(k, l)
     for epoch in range(epochs):
         total_loss = 0
         for currents, firing_rates, w in zip(Is_tr, fs_tr, ws):
@@ -36,11 +35,8 @@ def train_model(
                 
                 # up-weight loss for non-zero firing rate
                 alpha = up_factor if firing_rates[i] > 0 or f > 0 else 1
-                if loss_fn == "poisson":
-                    loss += alpha * criterion(f * bin_size, firing_rates[i] * bin_size)
-                else:
-                    loss += alpha * criterion(f, firing_rates[i])
-            loss += C * model.norm(p=1)
+                loss += alpha * criterion(f * bin_size, firing_rates[i] * bin_size)
+            loss += C * model.smoothness_reg()
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion

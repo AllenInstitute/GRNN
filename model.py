@@ -21,7 +21,7 @@ class FiringRateModel(torch.nn.Module):
         if ds is None:
             self.ds = torch.nn.Parameter(torch.tensor([0.2, 0.4, 0.6, 0.8, 1.0]), requires_grad=False)
         else:
-            self.ds = torch.nn.Parameter(torch.tensor(ds))
+            self.ds = torch.nn.Parameter(torch.tensor(ds)).to(torch.float32)
         
         self.n = len(self.ds)
         self.a = torch.zeros(self.n, k)

@@ -3,34 +3,64 @@ import pickle
 import torch
 import numpy as np
 
-def load_data(with_zero=False):
-    # with_zero = load data with leading zeros not removed
-    if with_zero:
-        path = "data/processed_data_zero/"
-    else:
-        path = "data/processed_data/"
+#from allensdk.core.cell_types_cache import CellTypesCache
 
-    data = {}
-    for f in os.listdir(path):
-        if os.path.isfile(path + f):
-            if f.split(".")[1] == "pickle":
-                cell_id = int(f.split(".")[0].split("_")[-1])
-                with open(path + f, "rb") as file:
-                    file_data = pickle.load(file)
-                    data[cell_id] = file_data
-                    
-    for cell_id in data:
-        with open(f"data/raw_data/raw_data_{cell_id}.pickle", "rb") as file:
-            file_data = pickle.load(file)
-            data[cell_id].append(file_data)
-    return data
+from config import config
 
-def preprocess_data(data, cell_id, bin_size=10):
-    d = data[cell_id][:-1] # don't include last element; raw data
+def get_data(cell_id, aligned=True):
+    path = config["data_path_aligned" if aligned else "data_path"] + f"processed_I_and_firing_rate_{cell_id}.pickle"
+    with open(path, "rb") as f:
+        return pickle.load(f)
     
+def get_raw_data(cell_id):
+    with open(config["raw_data_path"] + f"raw_data_{cell_id}.pickle", "rb") as file:
+        return pickle.load(file)
+
+def obtain_spike_time_and_current_and_voltage(cell_id):
+    ctc = CellTypesCache(manifest_file='cell_types/manifest.json')
+    raw_data = ctc.get_ephys_data(cell_id)
+    sweep_numbers = raw_data.get_sweep_numbers()
+        
+    data_set = []
+    for sweep_id in sweep_numbers:
+        sweep_data = {}
+        
+        stimulus_name = raw_data.get_sweep_metadata(sweep_id)['aibs_stimulus_name'].decode()
+        sweep_data['stimulus_name'] = stimulus_name
+        
+        sampling_rate = raw_data.get_sweep(sweep_id)['sampling_rate']
+        sweep_data['sampling_rate'] = sampling_rate
+        
+        # start/stop indices that exclude the experimental test pulse (if applicable)
+        index_range = raw_data.get_sweep(sweep_id)['index_range']
+        
+        I = 1E12*raw_data.get_sweep(sweep_id)['stimulus']
+        V = 1E3*raw_data.get_sweep(sweep_id)['response']
+        spike_times = raw_data.get_spike_times(sweep_id)
+        
+        #make sure index_range[1] is corrected for ramp:
+        if stimulus_name == 'Ramp':
+            max_I_idx = np.argmax(I) if np.argmax(I) > index_range[0] else None
+            voltage_dies_at = np.max(np.nonzero(V))
+            index_range_1 = min(index_range[1],voltage_dies_at)
+            if max_I_idx is not None:
+                index_range_1 = min(index_range_1,max_I_idx)
+
+            index_range_0 = index_range[0]
+            index_range = (index_range_0,index_range_1)
+        sweep_data['index_range'] = index_range
+        
+        sweep_data['current'] = I
+        sweep_data['spike_times'] = spike_times
+        sweep_data['voltage'] = V
+        
+        data_set.append(sweep_data)
+    return data_set
+
+def preprocess_data(data, bin_size=20):
     # filter long squares
     is_long_square = lambda s: s["stimulus_name"] == "Long Square"
-    sweeps = filter(is_long_square, d)
+    sweeps = filter(is_long_square, data)
     
     Is = []
     fs = []
@@ -39,26 +69,29 @@ def preprocess_data(data, cell_id, bin_size=10):
         fs.append(sweep["firing_rate"][bin_size][0])
     return Is, fs
 
-def get_train_test_data(data, cell_id, bin_size, device=None):
+# return train and test sets, batched by stimulus type
+def get_train_test_data(data, bin_size, device=None):
     Is_tr, fs_tr, Is_te, fs_te = tuple([] for _ in range(4))
-    labels = []
-    counts = {}
-    for sweep in data[cell_id][:-1]:
-        stim_name = sweep["stimulus_name"]
-        Is = torch.tensor(sweep["current"][bin_size], device=device)
-        fs = torch.tensor(sweep["firing_rate"][bin_size], device=device)
-        if stim_name == "Noise 2":
-            Is_te.append(Is)
-            fs_te.append(fs)
-        elif stim_name != "Test":
-            if stim_name not in counts:
-                counts[stim_name] = 0
-            counts[stim_name] += 1
-            Is_tr.append(Is)
-            fs_tr.append(fs)
-            labels.append(stim_name)
-    num_stims = len(counts.keys())
-    for stim in counts:
-        counts[stim] = 1 / (num_stims * counts[stim])
-    ws = list(map(lambda l: counts[l], labels))
-    return Is_tr, fs_tr, Is_te, fs_te, ws
+    Is, fs = {}, {}
+    stims = []
+
+    for sweep in data:
+        s = sweep["stimulus_name"]
+        if s not in Is:
+            Is[s] = []
+            fs[s] = []
+        Is[s].append(torch.tensor(sweep["current"][bin_size], device=device))
+        fs[s].append(torch.tensor(sweep["firing_rate"][bin_size], device=device))
+    
+    for s in Is:
+        Is_padded = torch.nn.utils.rnn.pad_sequence(Is[s], batch_first=True)
+        fs_padded = torch.nn.utils.rnn.pad_sequence(fs[s], batch_first=True)
+        if s == "Noise 2":
+            Is_te.append(Is_padded)
+            fs_te.append(fs_padded)
+        elif s != "Test":
+            Is_tr.append(Is_padded)
+            fs_tr.append(fs_padded)
+            stims.append(s)
+
+    return Is_tr, fs_tr, Is_te, fs_te, stims

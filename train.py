@@ -1,5 +1,7 @@
 import torch
 
+from tqdm import tqdm
+
 def train_model(
     model,
     criterion,
@@ -10,50 +12,47 @@ def train_model(
     print_every: int = 10,
     bin_size = 20,
     up_factor = 10,
-    ws = None,
-    closed = True,
-    C = 0,
     scheduler = None
 ):
-    if ws is None:
-        ws = [1 for _ in range(len(Is_tr))]
     losses = []
-    k, l = model.k, model.l
-    p = max(k, l)
-    for epoch in range(epochs):
+
+    for epoch in tqdm(range(epochs), desc="Train model"):
         total_loss = 0
-        for currents, firing_rates, w in zip(Is_tr, fs_tr, ws):
-            model.reset()
-            loss = 0
-            pred_fs = firing_rates[:p]
-            for i in range(p, len(currents)):
-                if closed:
-                    fs = pred_fs[:i]
-                    f = model(currents[:i+1], fs)
-                    pred_fs = torch.cat((pred_fs, f.reshape(1)))
-                else:
-                    f = model(currents[:i+1], firing_rates[:i])
+        for Is, fs in zip(Is_tr, fs_tr):
+            batch_size = Is.shape[0]
+            loss = torch.zeros(batch_size).to(model.device)
+            f = torch.zeros(batch_size, device=model.device)
+            model.reset(batch_size)
+            
+            for i in range(Is.shape[1]):
+                f = model(Is[:, i], f)
                 
                 # up-weight loss for non-zero firing rate
-                alpha = up_factor if firing_rates[i] > 0 or f > 0 else 1
-                loss += alpha * criterion(f * bin_size, firing_rates[i] * bin_size)
-            loss += C * model.smoothness_reg()
+                alpha = torch.ones(batch_size).to(model.device)
+                alpha[torch.logical_or(fs[:, i] > 0, f > 0)] = up_factor
+                loss += alpha * criterion(f * bin_size, fs[:, i] * bin_size)
+            
+            mean_loss = torch.mean(loss)
             optimizer.zero_grad()
-            loss.backward(retain_graph=True)
-            # torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # prevent gradient explosion
+            mean_loss.backward(retain_graph=True)
             optimizer.step()
-            total_loss += w * loss.item()
+
+            total_loss += mean_loss.item()
+            losses.append(total_loss)
+
         if scheduler is not None:
             scheduler.step()
-        losses.append(total_loss)
+        
         if (epoch+1) % print_every == 0:
             if scheduler is None:
                 print(f"Epoch {epoch+1} / Loss: {total_loss}")
             else:
                 curr_lr = scheduler.get_last_lr()
                 print(f"Epoch {epoch+1} / Loss: {total_loss} / lr: {curr_lr}")
+
         if len(losses) >= 3 and losses[-1] == losses[-2] == losses[-3]:
             return losses
+        
     return losses
 
 def fit_activation(
@@ -63,18 +62,14 @@ def fit_activation(
     Is,
     fs,
     epochs: int = 1000,
-    C = 0.1,
-    loss_fn = "huber"
+    C = 0.1
 ):
     losses = []
-    for _ in range(epochs):
+    for _ in tqdm(range(epochs), desc="Fit Activation"):
         total_loss = 0
         for current, fr in zip(Is, fs):
             pred_fr = actv(current)
-            if loss_fn == "poisson":
-                loss = criterion(pred_fr * actv.bin_size, fr * actv.bin_size)
-            else:
-                loss = criterion(pred_fr, fr)
+            loss = criterion(pred_fr * actv.bin_size, fr * actv.bin_size)
             total_loss += loss
         
         # L2 regularization

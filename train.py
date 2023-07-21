@@ -26,7 +26,7 @@ def train_model(
             
             for i in range(Is.shape[1]):
                 f = model(Is[:, i], f)
-                
+
                 # up-weight loss for non-zero firing rate
                 alpha = torch.ones(batch_size).to(model.device)
                 alpha[torch.logical_or(fs[:, i] > 0, f > 0)] = up_factor
@@ -36,10 +36,10 @@ def train_model(
             optimizer.zero_grad()
             mean_loss.backward(retain_graph=True)
             optimizer.step()
-
             total_loss += mean_loss.item()
-            losses.append(total_loss)
 
+        losses.append(total_loss)
+        
         if scheduler is not None:
             scheduler.step()
         
@@ -62,18 +62,20 @@ def fit_activation(
     Is,
     fs,
     epochs: int = 1000,
-    C = 0.1
+    C = 0
 ):
     losses = []
     for _ in tqdm(range(epochs), desc="Fit Activation"):
         total_loss = 0
         for current, fr in zip(Is, fs):
-            pred_fr = actv(current)
+            pred_fr = actv(current).squeeze()
             loss = criterion(pred_fr * actv.bin_size, fr * actv.bin_size)
+            #loss = criterion(pred_fr, fr)
             total_loss += loss
         
         # L2 regularization
-        total_loss += C * torch.mean(torch.pow(actv.poly_coeff[1:], 2))
+        if C > 0:
+            total_loss += C * torch.mean(torch.pow(actv.poly_coeff[1:], 2))
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()

@@ -5,7 +5,7 @@ import numpy as np
 from model import PolynomialActivation
 from train import fit_activation
 from utils import get_max_firing_rate
-from data import get_data, obtain_spike_time_and_current_and_voltage, preprocess_data, get_train_test_data
+from data import get_data, obtain_spike_time_and_current_and_voltage, preprocess_data
 
 def get_activations(
     Is,
@@ -89,7 +89,6 @@ def fit_all_activations(cell_ids, bin_size):
                 print("Missing")
                 append_to_file("model/missing.txt", f"{cell_id}\n")
             if g is None:
-                errors.append(cell_id)
                 print("Error")
                 append_to_file("model/error.txt", f"{cell_id}\n")
             else:

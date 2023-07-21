@@ -19,9 +19,9 @@ class FiringRateModel(torch.nn.Module):
         
         self.ds = torch.nn.Parameter(torch.tensor(ds).to(torch.float32), requires_grad=False)
         self.n = len(self.ds)
-        self.a = torch.nn.Parameter(torch.ones(self.n))
-        self.b = torch.nn.Parameter(torch.zeros(self.n))
-        self.w = torch.nn.Parameter(torch.ones(self.n) / self.n).reshape(-1, 1).to(device)
+        self.a = torch.nn.Parameter(torch.ones(self.n) + torch.randn(self.n) * 0.001)
+        self.b = torch.nn.Parameter(torch.randn(self.n) * 0.001)
+        self.w = torch.nn.Parameter((torch.ones(self.n) + torch.randn(self.n) * 0.001) / self.n).reshape(-1, 1).to(device)
         
         # freeze activation parameters
         for _, p in self.g.named_parameters():
@@ -36,7 +36,7 @@ class FiringRateModel(torch.nn.Module):
         x = torch.outer(currents, self.a) # shape [B, n]
         y = 1000 * torch.outer(fs, self.b) # shape [B, n]
         self.v =  (1 - self.ds) * self.v + x + y # shape [B, n]
-        return self.g(self.v @ self.w).squeeze() # shape [B]
+        return self.g(self.v @ self.w).reshape(-1) # shape [B]
     
     def reset(self, batch_size):
         self.v = torch.zeros(batch_size, self.n).to(self.device)
@@ -104,8 +104,8 @@ class PolynomialActivation(torch.nn.Module):
                 x1, y1 = (xs[i-1], ys[i-1]) if i - 1 > 0 else (xs[i], ys[i])
                 break
         self.b = torch.nn.Parameter(x1.clone())
-        self.poly_coeff = torch.ones(self.degree + 1) * 1e-1 # to make sure there is some gradient
-        self.poly_coeff[1] = (y2 - y1) / (x2 - x1) * self.max_current * torch.abs(torch.randn(1)[0] * 7 + 10)
+        self.poly_coeff = torch.randn(self.degree + 1) * 1e-1 # to make sure there is some gradient
+        self.poly_coeff[1] = (y2 - y1) / (x2 - x1) * self.max_current #* torch.abs(torch.randn(1)[0] * 7 + 15)
         self.poly_coeff = torch.nn.Parameter(self.poly_coeff)
         
     def init_from_file(self, filename):

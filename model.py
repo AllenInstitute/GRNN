@@ -55,11 +55,11 @@ class FiringRateModel(torch.nn.Module):
 
     def get_params(self):
         return {
-            "a": self.a.clone(),
-            "b": self.b.clone(),
-            "g": self.g.get_params() if callable(getattr(self.g, "get_params", None)) else [],
-            "w": self.w.clone(),
-            "ds": self.ds.clone()
+            "a": self.a.cpu(),
+            "b": self.b.cpu(),
+            "g": self.g.get_params(),
+            "w": self.w.cpu().clone(),
+            "ds": self.ds.cpu().clone()
         }
 
     # Is: shape [seq_length]
@@ -120,8 +120,8 @@ class PolynomialActivation(torch.nn.Module):
     def init_from_params(self, params):
         self.max_current = params["max_current"]
         self.max_firing_rate = params["max_firing_rate"]
-        self.poly_coeff = params["poly_coeff"]
-        self.b = params["b"]
+        self.poly_coeff = torch.nn.Parameter(params["poly_coeff"])
+        self.b = torch.nn.Parameter(params["b"])
         self.C = params["C"]
         self.degree = len(self.poly_coeff) - 1
         self.p = torch.tensor([d for d in range(self.degree+1)])
@@ -131,8 +131,8 @@ class PolynomialActivation(torch.nn.Module):
         return {
             "max_current": self.max_current,
             "max_firing_rate": self.max_firing_rate,
-            "poly_coeff": self.poly_coeff,
-            "b": self.b,
+            "poly_coeff": self.poly_coeff.cpu(),
+            "b": self.b.cpu(),
             "C": self.C
         }
 

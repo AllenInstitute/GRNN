@@ -1,7 +1,5 @@
 import torch
 
-from tqdm import tqdm
-
 def train_model(
     model,
     criterion,
@@ -16,7 +14,7 @@ def train_model(
 ):
     losses = []
 
-    for epoch in tqdm(range(epochs), desc="Train model"):
+    for epoch in range(epochs):
         total_loss = 0
         for Is, fs in zip(Is_tr, fs_tr):
             batch_size = Is.shape[0]
@@ -39,7 +37,7 @@ def train_model(
             total_loss += mean_loss.item()
 
         losses.append(total_loss)
-        
+
         if scheduler is not None:
             scheduler.step()
         
@@ -65,7 +63,7 @@ def fit_activation(
     C = 0
 ):
     losses = []
-    for _ in tqdm(range(epochs), desc="Fit Activation"):
+    for _ in range(epochs):
         total_loss = 0
         for current, fr in zip(Is, fs):
             pred_fr = actv(current).squeeze()

@@ -4,6 +4,17 @@ import matplotlib.pyplot as plt
 
 from config import config
 
+def read_file(fname):
+    arr = []
+    with open(fname, "r") as f:
+        for x in f:
+            arr.append(int(x))
+    return arr
+
+def append_to_file(fname, s):
+    with open(fname, "a") as f:
+        f.write(s)
+
 def get_max_firing_rate(data):
     diffs = np.concatenate([np.diff(d["spike_times"]) for d in data])
     return np.max(1 / diffs) / 1000 # return in ms^-1

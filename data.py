@@ -56,6 +56,67 @@ def obtain_spike_time_and_current_and_voltage(cell_id):
         data_set.append(sweep_data)
     return data_set
 
+def downsample_by_avg(x,n):
+    '''this function downsample a given time series by using the average of chunks of time series that 
+    are not overlaping. It preserves the integral of the downsampled time series.'''
+    x=np.array(x)
+    if n>1:
+        interval_num = int(x.shape[0]/n)
+        x = x[0:interval_num*n]
+        return np.mean(x.reshape(-1, n), 1)
+    else:
+        return x
+
+def obtain_firing_rate_and_current_given_time_bin(cell_id = 324257146,bin_durs = [10,20,50,100]):
+    ctc = CellTypesCache(manifest_file='cell_types/manifest.json')
+    raw_data = ctc.get_ephys_data(cell_id)
+    sweep_numbers = raw_data.get_sweep_numbers()
+
+    data_set = []
+    for sweep_id in sweep_numbers:
+        sweep_data = {}
+        sweep_data['current'] = {}
+        sweep_data['firing_rate'] = {}
+        #print('processing sweep with sweep id = '+ str(sweep_id))
+        stimulus_name = raw_data.get_sweep_metadata(sweep_id)['aibs_stimulus_name'].decode()
+        sweep_data['stimulus_name'] = stimulus_name
+        sampling_rate = raw_data.get_sweep(sweep_id)['sampling_rate']
+        # start/stop indices that exclude the experimental test pulse (if applicable)
+        index_range = raw_data.get_sweep(sweep_id)['index_range']
+        I = 1E12*raw_data.get_sweep(sweep_id)['stimulus']
+        V = 1E3*raw_data.get_sweep(sweep_id)['response']
+        S = np.zeros_like(I)
+        spike_times = raw_data.get_spike_times(sweep_id)
+        spike_idxs = [int(spike_time*sampling_rate) for spike_time in spike_times]
+        for spike_idx in spike_idxs:
+            S[spike_idx]=1.0
+        #make sure index_range[1] is corrected for ramp:
+        if stimulus_name == 'Ramp':
+            max_I_idx = np.argmax(I) if np.argmax(I) > index_range[0] else None
+            voltage_dies_at = np.max(np.nonzero(V))
+            index_range_1 = min(index_range[1],voltage_dies_at)
+            if max_I_idx is not None:
+                index_range_1 = min(index_range_1,max_I_idx)
+
+            index_range_0 = index_range[0]
+            index_range = (index_range_0,index_range_1)
+        
+        #find the begining of non-zero I within the I[index_range[0]:index_range[1]]:
+        if stimulus_name!='Test':
+            I_diff = np.diff(I[index_range[0]:index_range[1]])
+            I_diff_nonzero_idxs = I_diff.nonzero()
+            begin_idx = I_diff_nonzero_idxs[0][0]
+
+        #save corrected index_range
+        for bin_dur in bin_durs:
+            bin_size = int(bin_dur*0.001*sampling_rate)
+            mean_I_at_bin = downsample_by_avg(I[index_range[0]:index_range[1]][begin_idx:],bin_size)
+            firing_rate_at_bin = downsample_by_avg(S[index_range[0]:index_range[1]][begin_idx:],bin_size)*bin_size/bin_dur
+            sweep_data['current'][bin_dur] = mean_I_at_bin
+            sweep_data['firing_rate'][bin_dur] = firing_rate_at_bin
+        data_set.append(sweep_data)
+    return data_set
+
 def preprocess_data(data, bin_size=20):
     # filter long squares
     is_long_square = lambda s: s["stimulus_name"] == "Long Square"

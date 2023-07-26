@@ -88,12 +88,12 @@ class PolynomialActivation(torch.nn.Module):
         return F.relu(tan) # shape [B, 1]
     
     # slightly ad hoc parameter initialization
-    def init_params(self, degree, max_current, max_firing_rate, Is, fs, C=0):
+    def init_params(self, bin_size, degree, max_current, max_firing_rate, Is, fs):
+        self.bin_size = bin_size
         self.degree = degree # polynomial degree
         self.max_current = max_current # used for normalization
         self.max_firing_rate = max_firing_rate
         self.p = torch.nn.Parameter(torch.tensor([d for d in range(degree+1)]), requires_grad=False)
-        self.C = C
         
         x1, x2, y1, y2 = tuple([torch.tensor(0.0)] * 4)
         xs, ys = map(list, zip(*sorted(zip(Is.cpu(), fs.cpu()), key=lambda x: x[0])))
@@ -118,11 +118,11 @@ class PolynomialActivation(torch.nn.Module):
             self.init_from_params(params)
 
     def init_from_params(self, params):
+        self.bin_size = params["bin_size"]
         self.max_current = params["max_current"]
         self.max_firing_rate = params["max_firing_rate"]
         self.poly_coeff = torch.nn.Parameter(params["poly_coeff"])
         self.b = torch.nn.Parameter(params["b"])
-        self.C = params["C"]
         self.degree = len(self.poly_coeff) - 1
         self.p = torch.tensor([d for d in range(self.degree+1)])
         self.p = torch.nn.Parameter(self.p, requires_grad=False)
@@ -133,7 +133,7 @@ class PolynomialActivation(torch.nn.Module):
             "max_firing_rate": self.max_firing_rate,
             "poly_coeff": self.poly_coeff.cpu(),
             "b": self.b.cpu(),
-            "C": self.C
+            "bin_size": self.bin_size
         }
 
     def save_params(self, filename):

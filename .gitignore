@@ -5,3 +5,6 @@ data/
 figures/
 __pycache__/
 *.backup
+model/
+model/params/*
+misc/

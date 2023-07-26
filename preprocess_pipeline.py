@@ -10,8 +10,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("chunk_num", type=int, help="Chunk number")
     args = parser.parse_args()
-
-    cell_ids = np.genfromtxt(f"misc/preprocess_chunks/chunk{args.chunk_num}.csv", delimiter=",")
+    
+    cell_ids = list(map(int, np.genfromtxt(f"misc/preprocess_chunks/chunk{args.chunk_num}.csv", delimiter=",")))
 
     for i, cell_id in enumerate(cell_ids):
         print(f"({i+1}/{len(cell_ids)} Cell {cell_id})")
@@ -24,4 +24,4 @@ if __name__ == "__main__":
             except Exception as e:
                 print(e)
         else:
-            print("File aleady exists. Skipped.")
+            print("File already exists. Skipping.")

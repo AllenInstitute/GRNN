@@ -80,3 +80,21 @@ def plot_kernel(model, cell_id, bin_size, save=False, fname=None):
     if save:
         plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
         plt.close()
+        
+def get_activation_plot(actv, start=-100, end=270):
+    currents = torch.linspace(start, end, steps=300)
+    fs = []
+    with torch.no_grad():
+        for i in currents:
+            f = actv(i).squeeze().item()
+            fs.append(f)
+    return currents, fs
+
+def plot_activation(Is, fs, actv):
+    plt.figure()
+    plt.title(f"bin_size={actv.bin_size}, degree={actv.degree}")
+    plt.scatter(Is, fs)
+    xs1, ys1 = get_activation_plot(actv, end=int(actv.max_current)+200)
+    plt.plot(xs1, ys1)
+    plt.xlabel("current (pA)")
+    plt.ylabel("firing rate ($ms^{-1}$)")

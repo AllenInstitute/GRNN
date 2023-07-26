@@ -100,7 +100,8 @@ def obtain_firing_rate_and_current_given_time_bin(cell_id = 324257146,bin_durs =
 
             index_range_0 = index_range[0]
             index_range = (index_range_0,index_range_1)
-        
+            
+        begin_idx = 0
         #find the begining of non-zero I within the I[index_range[0]:index_range[1]]:
         if stimulus_name!='Test':
             I_diff = np.diff(I[index_range[0]:index_range[1]])
@@ -117,7 +118,7 @@ def obtain_firing_rate_and_current_given_time_bin(cell_id = 324257146,bin_durs =
         data_set.append(sweep_data)
     return data_set
 
-def preprocess_data(data, bin_size=20):
+def preprocess_data(data, bin_size):
     # filter long squares
     is_long_square = lambda s: s["stimulus_name"] == "Long Square"
     sweeps = filter(is_long_square, data)

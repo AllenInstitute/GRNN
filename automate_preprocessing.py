@@ -18,6 +18,7 @@ if __name__ == "__main__":
     
     sbatch_script = "scripts/run_preprocess_pipeline.sh"
     for i in range(args.chunk_num):
-      command = ["sbatch", sbatch_script, i]
-      command = [str(component) for component in command]
-      subprocess.run(command)
+        command = ["sbatch", sbatch_script, i]
+        command = [str(component) for component in command]
+        print(f"Running command: {command}")
+        subprocess.run(command)

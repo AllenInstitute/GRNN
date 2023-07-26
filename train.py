@@ -59,8 +59,7 @@ def fit_activation(
     optimizer,
     Is,
     fs,
-    epochs: int = 1000,
-    C = 0.1
+    epochs: int = 1000
 ):
     losses = []
     for _ in range(epochs):
@@ -70,8 +69,6 @@ def fit_activation(
             loss = criterion(pred_fr * actv.bin_size, fr * actv.bin_size)
             total_loss += loss
         
-        # L2 regularization
-        total_loss += C * torch.mean(torch.pow(actv.poly_coeff[1:], 2))
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()

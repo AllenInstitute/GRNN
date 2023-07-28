@@ -9,7 +9,8 @@ class FiringRateModel(torch.nn.Module):
         g, # activation function
         ds,
         bin_size = 20,
-        device = None
+        device = None,
+        freeze_g = True
     ):
         super().__init__()
         self.g = g
@@ -24,8 +25,9 @@ class FiringRateModel(torch.nn.Module):
         self.w = torch.nn.Parameter((torch.ones(self.n) + torch.randn(self.n) * 0.001) / self.n).reshape(-1, 1).to(device)
         
         # freeze activation parameters
-        for _, p in self.g.named_parameters():
-            p.requires_grad = False
+        if freeze_g:
+            for _, p in self.g.named_parameters():
+                p.requires_grad = False
     
     # outputs a tensor of shape [B], firing rate predictions at time t
     def forward(
@@ -41,7 +43,7 @@ class FiringRateModel(torch.nn.Module):
     def reset(self, batch_size):
         self.v = torch.zeros(batch_size, self.n).to(self.device)
 
-    def init_from_params(self, params):
+    def init_from_params(self, params, freeze_g=True):
         self.a = torch.nn.Parameter(params["a"])
         self.b = torch.nn.Parameter(params["b"])
         self.g = PolynomialActivation()
@@ -49,17 +51,18 @@ class FiringRateModel(torch.nn.Module):
         self.ds = torch.nn.Parameter(params["ds"], requires_grad=False)
         self.w = torch.nn.Parameter(params["w"])
         self.n = len(self.ds)
-
-        for _, p in self.g.named_parameters():
-            p.requires_grad = False
+        
+        if freeze_g:
+            for _, p in self.g.named_parameters():
+                p.requires_grad = False
 
     def get_params(self):
         return {
-            "a": self.a.cpu(),
-            "b": self.b.cpu(),
+            "a": self.a.detach().cpu(),
+            "b": self.b.detach().cpu(),
             "g": self.g.get_params(),
-            "w": self.w.cpu().clone(),
-            "ds": self.ds.cpu().clone()
+            "w": self.w.detach().cpu(),
+            "ds": self.ds.detach().cpu()
         }
 
     # Is: shape [seq_length]
@@ -105,7 +108,7 @@ class PolynomialActivation(torch.nn.Module):
                 break
         self.b = torch.nn.Parameter(x1.clone())
         self.poly_coeff = torch.randn(self.degree + 1) * 1e-1 # to make sure there is some gradient
-        self.poly_coeff[1] = (y2 - y1) / (x2 - x1) * self.max_current #* torch.abs(torch.randn(1)[0] * 7 + 15)
+        self.poly_coeff[1] = np.abs((y2 - y1) / (x2 - x1) * self.max_current) #* torch.abs(torch.randn(1)[0] * 7 + 15)
         self.poly_coeff = torch.nn.Parameter(self.poly_coeff)
         
     def init_from_file(self, filename):
@@ -131,8 +134,8 @@ class PolynomialActivation(torch.nn.Module):
         return {
             "max_current": self.max_current,
             "max_firing_rate": self.max_firing_rate,
-            "poly_coeff": self.poly_coeff.cpu(),
-            "b": self.b.cpu(),
+            "poly_coeff": self.poly_coeff.detach().cpu(),
+            "b": self.b.detach().cpu(),
             "bin_size": self.bin_size
         }
 
@@ -140,3 +143,10 @@ class PolynomialActivation(torch.nn.Module):
         d = self.get_params()
         with open(filename, 'wb') as handle:
             pickle.dump(d, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+def load_model(params, freeze_g=True):
+    g = PolynomialActivation()
+    g.init_from_params(params["g"])
+    model = FiringRateModel(g, [])
+    model.init_from_params(params, freeze_g=freeze_g)
+    return model

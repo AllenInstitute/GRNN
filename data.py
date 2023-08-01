@@ -132,7 +132,7 @@ def preprocess_data(data, bin_size):
 
 # return train and test sets, batched by stimulus type
 def get_train_test_data(data, bin_size, device=None):
-    Is_tr, fs_tr, Is_te, fs_te = tuple([] for _ in range(4))
+    Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te = tuple([] for _ in range(6))
     Is, fs = {}, {}
     stims = []
 
@@ -147,7 +147,10 @@ def get_train_test_data(data, bin_size, device=None):
     for s in Is:
         Is_padded = torch.nn.utils.rnn.pad_sequence(Is[s], batch_first=True)
         fs_padded = torch.nn.utils.rnn.pad_sequence(fs[s], batch_first=True)
-        if s == "Noise 2":
+        if s == "Noise 1":
+            Is_val.append(Is_padded)
+            fs_val.append(fs_padded)
+        elif s == "Noise 2":
             Is_te.append(Is_padded)
             fs_te.append(fs_padded)
         elif s != "Test":
@@ -155,4 +158,4 @@ def get_train_test_data(data, bin_size, device=None):
             fs_tr.append(fs_padded)
             stims.append(s)
 
-    return Is_tr, fs_tr, Is_te, fs_te, stims
+    return Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims

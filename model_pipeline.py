@@ -6,10 +6,10 @@ import argparse
 import os
 import json
 
-from model import FiringRateModel, PolynomialActivation
+from model import ExponentialKernelFiringRateModel, PolynomialActivation
 from train import train_model, fit_activation
 from evaluate import explained_variance_ratio
-from data import get_data, get_train_test_data, obtain_spike_time_and_current_and_voltage, preprocess_data
+from data import get_data, get_train_test_data, preprocess_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument("chunk_num", type=int, help="Chunk number")
@@ -31,40 +31,33 @@ def get_activations(
     device=None
 ):  
     max_current = np.max(np.abs(Is.cpu().numpy()))
-    actvs = []
+    gs = []
     losses = []
-
-    best_actv = None
+    best_g = None
     best_loss = 1e10
     
     for degree in range(1, max_degree+1):
         for i in range(repeats):
-            actv = PolynomialActivation()
-            actv.init_params(bin_size, degree, max_current, max_firing_rate, Is, fs)
-            actv = actv.to(device)
+            g = PolynomialActivation.from_data(degree, max_current, max_firing_rate, bin_size, Is, fs).to(device)
             criterion = torch.nn.PoissonNLLLoss(log_input=False)
-            optimizer = torch.optim.Adam(actv.parameters(), lr=0.05)
+            optimizer = torch.optim.Adam(g.parameters(), lr=0.05)
 
             ls = fit_activation(
-                actv,
+                g,
                 criterion,
                 optimizer,
                 Is,
                 fs,
                 epochs=epochs,
             )
-
             loss = ls[-1]
-            
             print(f"degree {degree}, repeat {i}, final loss {loss}")
-
             if loss < best_loss:
-                best_actv, best_loss = actv, loss
+                best_g, best_loss = g, loss
 
-    actvs.append(best_actv)
-    losses.append(best_loss)
-    best_actv = actvs[np.argmin(losses)]
-    return best_actv
+        gs.append(best_g)
+        losses.append(best_loss)
+    return gs[np.argmin(losses)]
 
 def train(
     Is, 
@@ -80,17 +73,26 @@ def train(
     
     for i, hs in enumerate(hparams):
         print(f"\t\tRun {i}: {hs}")
-        model = FiringRateModel(
-            g.to(device), ds, bin_size=bin_size, device=device
-        ).to(device)
+        if CONFIG["use_previous_save"] and os.path.isfile(f"{CONFIG['save_path']}{cell_id}.pickle"):
+            print("\t\tloading previous save")
+            with open(f"{CONFIG['save_path']}{cell_id}.pickle", "rb") as f:
+                params = pickle.load(f)["params"]
+            if CONFIG["lift_degree"]:
+                print("\t\tlifting degree")
+                max_degree = CONFIG["activation_max_degree"]
+                new_coeff = torch.zeros(max_degree + 1)
+                old_coeff = params["g"]["poly_coeff"].detach().cpu()
+                new_coeff[:len(old_coeff)] = old_coeff
+                params["g"]["poly_coeff"] = new_coeff
+            model = ExponentialKernelFiringRateModel.from_params(params, freeze_g=CONFIG["freeze_activation"]).to(device)
+        else:
+            model = ExponentialKernelFiringRateModel(
+                g, ds, bin_size, freeze_g=CONFIG["freeze_activation"], device=device
+            ).to(device)
 
         criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none")
         optimizer = torch.optim.RMSprop(model.parameters(), lr=hs["lr"], centered=True)
-        
-        if CONFIG["scheduler"] == "step_lr":
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, gamma=hs["gamma"], step_size=hs["step_size"])
-        elif CONFIG["scheduler"] == "cosine_annealing_lr":
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=hs["T_max"], eta_min=hs["eta_min"])
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, gamma=hs["gamma"], step_size=hs["step_size"])
 
         losses = train_model(
             model, 
@@ -101,7 +103,7 @@ def train(
             epochs = hs["epochs"],
             print_every = 1,
             bin_size = bin_size,
-            up_factor = 1,
+            up_factor = CONFIG["up_factor"],
             scheduler = scheduler
         )
         
@@ -111,7 +113,7 @@ def train(
     
     return best_model, best_losses
 
-def model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rate, device=None, g=None):
+def fit_model(cell_id, bin_size, activation_bin_size, max_firing_rate, device=None, g=None):
     print("\tloading data for activation")
     aligned_data = get_data(cell_id, aligned=True)
     Is, fs = preprocess_data(aligned_data, activation_bin_size)
@@ -133,14 +135,13 @@ def model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rate, devi
 
     if g is None:
         print(f"\tError: activation for cell {cell_id} is None")
+        print(f"Sum of firing rates (for activation fit): {torch.sum(fs)}")
         raise Exception
     else:
-        print(g.poly_coeff, g.max_firing_rate)
-        
         print("\tloading data for model")
-        ds = CONFIG["decays"]
+        ds = torch.tensor(CONFIG["decays"]).to(torch.float32)
         data = get_data(cell_id, aligned=False)
-        Is_tr, fs_tr, Is_te, fs_te, stims = get_train_test_data(data, bin_size, device=device)
+        Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims = get_train_test_data(data, bin_size, device=device)
         Is_tr, fs_tr, stims = sklearn.utils.shuffle(Is_tr, fs_tr, stims)
         
         print("\tstart training model")
@@ -148,66 +149,56 @@ def model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rate, devi
         model, losses = train(Is_tr, fs_tr, g.to(device), ds, cell_id, bin_size, device=device, hparams=hparams)
         
         print("\tcomputing evr")
-        r = explained_variance_ratio(model, Is_te[0], fs_te[0], bin_size)
-        print(f"\t{r}")
+        evr1 = explained_variance_ratio(model, Is_val[0], fs_val[0], bin_size)
+        evr2 = explained_variance_ratio(model, Is_te[0], fs_te[0], bin_size)
+        print(f"\t{evr1}, {evr2}")
         
-        return model.get_params(), r, losses
+        return model.get_params(), evr1, evr2, losses
 
-def fit_all_models(cell_ids, bin_size, activation_bin_size, max_firing_rates, device, save_path="model/params/"):
-    print(f"Chunk {CHUNK_NUM}")
-    
-    for i, cell_id in enumerate(cell_ids):
-        print(f"({i+1}/{len(cell_ids)}) Cell {cell_id}")
-        
-        retrain = False
-        params_old = None
-        g = None
-        if os.path.isfile(f"{save_path}{cell_id}.pickle"):
-            with open(f"{save_path}{cell_id}.pickle", 'rb') as f:
-                print("model already exists")
-                params_old = pickle.load(f)
+def model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rates, device, save_path="model/params/"):        
+    retrain = CONFIG["retrain_model"]
+    params_old = None
+    g = None
+    if os.path.isfile(f"{save_path}{cell_id}.pickle"):
+        with open(f"{save_path}{cell_id}.pickle", 'rb') as f:
+            print("model already exists")
+            params_old = pickle.load(f)
+        if not CONFIG["retrain_activation"]:
+            g = PolynomialActivation.from_params(params_old["params"]["g"])
             
-            g = PolynomialActivation()
-            g.init_from_params(params_old["params"]["g"])
-            if len(params_old["losses"]) < 50:
-                print("requirements satisfied. retraining model")
-                retrain = True
-                
+    if retrain or params_old is None:
+        p, evr1, evr2, losses = fit_model(cell_id, bin_size, activation_bin_size, max_firing_rates[cell_id], device=device, g=g)
+        params = {
+            "params": p,
+            "evr1": evr1,
+            "evr2": evr2,
+            "losses": losses,
+            "bin_size": bin_size
+        }
         
-        if retrain or params_old is None:
-            try:
-                p, r, losses = model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rates[cell_id], device=device, g=g)
-                params = {
-                    "params": p,
-                    "evr": r,
-                    "losses": losses
-                }
-                
-                print("saving model params")
-                if params_old is None:
-                    with open(f'{save_path}{cell_id}.pickle', 'wb') as handle:
-                        pickle.dump(params, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                else:
-                    if losses[-1] < params_old["losses"][-1]:
-                        print("overwriting old parameters")
-                        with open(f'{save_path}{cell_id}.pickle', 'wb') as handle:
-                            pickle.dump(params, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            except Exception as err:
-                print(err)
-        else:
-            print("Skipping")
+        if params_old is None or evr1 > params_old["evr1"]:
+            print("saving model params")
+            with open(f'{save_path}{cell_id}.pickle', 'wb') as handle:
+                pickle.dump(params, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(CONFIG)
-    print(device)
-    cell_ids = list(map(int, np.genfromtxt(f'misc/chunks/chunk{CHUNK_NUM}.csv', delimiter=',')))
+    cell_ids = np.genfromtxt(f'misc/chunks/chunk{CHUNK_NUM}.csv', delimiter=',')
+    cell_ids = [int(cell_ids)] if cell_ids.shape == () else list(map(int, cell_ids))
     bin_size = CONFIG["bin_size"]
     activation_bin_size = CONFIG["activation_bin_size"]
+    save_path = CONFIG["save_path"]
     
     with open("model/max_firing_rates.pickle", "rb") as f:
         max_firing_rates = pickle.load(f)
-    
-    save_path = CONFIG["save_path"]
 
-    fit_all_models(cell_ids, bin_size, activation_bin_size, max_firing_rates, device, save_path=save_path)
+    print(CONFIG)
+    print(f"Device: {device}")
+    print(f"Chunk {CHUNK_NUM}")
+
+    for i, cell_id in enumerate(cell_ids):
+        print(f"({i+1}/{len(cell_ids)}) Cell {cell_id}")
+        try:
+            model_pipeline(cell_id, bin_size, activation_bin_size, max_firing_rates, device, save_path=save_path)
+        except Exception as e:
+            print(f"Skipping {cell_id} due to error: {e}")

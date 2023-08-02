@@ -2,8 +2,10 @@ import torch
 import pickle
 import os
 import random
-import numpy as np
-from model import load_model
+
+from model import (
+    BatchEKFR, BatchGFR, GeneralizedFiringRateModel, ExponentialKernelFiringRateModel
+)
 
 def get_params(save_path="model/params/"):
     params = {}
@@ -13,52 +15,64 @@ def get_params(save_path="model/params/"):
             params[int(fname.split(".")[0])] = p
     return params
 
-def get_random_neurons(n_neurons, save_path="model/params/"):
+def get_random_neurons(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr"):
     params = get_params(save_path)
     cell_ids = []
 
     for cell_id in params:
-        if params[cell_id]["evr"] >= 0.7:
+        if params[cell_id]["evr2"] >= threshold:
             cell_ids.append(cell_id)
 
     chosen_ids = random.sample(cell_ids, k=n_neurons)
-    neurons = {}
+    neurons = []
     for cell_id in chosen_ids:
-        model = load_model(params[cell_id]["params"])
-        neurons[cell_id] = model
-    return neurons
+        neurons.append(ExponentialKernelFiringRateModel.from_params(params[cell_id]["params"]))
+    if neuron_type == "gfr":
+        neurons = [GeneralizedFiringRateModel.from_ekfr(model, 5, 5) for model in neurons]
+        
+    return neurons, chosen_ids
+
+def get_neuron_layer(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr"):
+    neurons = get_random_neurons(n_neurons, save_path=save_path, threshold=threshold, neuron_type=neuron_type)[0]
+    cls = BatchEKFR if neuron_type == "ekfr" else BatchGFR
+    return cls(neurons, freeze_g=True)
 
 class Network(torch.nn.Module):
-    def __init__(self, in_dim, out_dim, n_neurons) -> None:
+    def __init__(self, in_dim, hidden_dim, out_dim, neuron_type="ekfr", freeze_neurons=True) -> None:
         super().__init__()
         
-        # first in_dim neurons are input neurons
-        # last out_dim neurons are output neurons
-        assert n_neurons >= in_dim + out_dim
-        
         self.in_dim = in_dim
+        self.hidden_dim = hidden_dim
         self.out_dim = out_dim
-        self.n_neurons = n_neurons
-        self.neurons = get_random_neurons(n_neurons)
+        self.neuron_type = neuron_type
         
-        ## connectivity matrix
-        self.A = torch.nn.Parameter(torch.randn(n_neurons, n_neurons)) / np.sqrt(n_neurons)
-        # readout weights
-        self.w = torch.nn.Parameter(torch.randn(out_dim))
-        
-        self.neurons = torch.nn.ModuleList([neurons[cell_id] for cell_id in neurons])
-        self.cell_ids = list(neurons.keys())
+        self.fc1 = torch.nn.Linear(in_dim, hidden_dim)
+        with torch.no_grad():
+            self.fc1.weight.normal_(1, 1)
+        self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
+
+        self.hidden_neurons = get_neuron_layer(hidden_dim, neuron_type=neuron_type)
+        if freeze_neurons:
+            self.hidden_neurons.freeze_parameters()
     
     def reset(self, batch_size):
-        for neuron in self.neurons:
-            neuron.reset(batch_size)
-        self.fs = torch.zeros(batch_size, self.n_neurons)
+        self.hidden_neurons.reset(batch_size)
+        self.xh = torch.zeros(batch_size, self.hidden_dim)
+        
+    def reg(self):
+        return self.hidden_neurons.smoothness_reg() if self.neuron_type == "gfr" else 0
+        
+    def zero_input(self, batch_size):
+        return torch.zeros(batch_size, self.in_dim)
     
     # x: [batch_size, in_dim]
     def forward(self, x):
-        for i in range(self.in_dim):
-            self.fs[i] = self.neurons[i](x[:, i] + torch.tensordot(self.fs, self.A[i, :], dims=1), self.fs[:, i])
-        return torch.tensordot(self.fs[:, self.out_dim:], self.w, dims=1)
+        x_in = torch.einsum("ij,j->ij", self.fc1(x), self.hidden_neurons.g.max_current)
+        x_rec = self.fc2(self.xh)
+        self.xh = self.hidden_neurons(x_in + x_rec)
+        out = self.fc3(self.xh)
+        return out
 
 
 if __name__ == "__main__":

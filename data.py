@@ -6,6 +6,13 @@ import numpy as np
 
 from config import config
 
+def get_MNIST_data_loaders(batch_size):
+    train_set = torchvision.datasets.MNIST('data/mnist/train', download=True, train=True, transform=torchvision.transforms.ToTensor())
+    test_set = torchvision.datasets.MNIST('data/mnist/test', download=True, train=False, transform=torchvision.transforms.ToTensor())
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
+    return train_loader, test_loader
+
 def get_data(cell_id, aligned=True):
     path = config["data_path_aligned" if aligned else "data_path"] + f"processed_I_and_firing_rate_{cell_id}.pickle"
     with open(path, "rb") as f:

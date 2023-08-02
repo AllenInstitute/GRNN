@@ -73,9 +73,3 @@ class Network(torch.nn.Module):
         self.xh = self.hidden_neurons(x_in + x_rec)
         out = self.fc3(self.xh)
         return out
-
-
-if __name__ == "__main__":
-    neurons = get_random_neurons(10)
-    for cell_id in neurons:
-        print(cell_id, neurons[cell_id].get_params())

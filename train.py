@@ -1,4 +1,7 @@
 import torch
+import torch.nn.functional as F
+
+from utils import reshape_image
 
 def train_model(
     model,
@@ -74,3 +77,36 @@ def fit_activation(
         optimizer.step()
         losses.append(total_loss.item())
     return losses
+
+def train_network(model, train_loader, epochs, lr=0.005, variant="p"):        
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    
+    for epoch in range(epochs):
+        total_loss = 0
+
+        for x, label in train_loader:
+            x = x.reshape(x.shape[0], 28, 28)
+            x = reshape_image(x, variant=variant)
+            
+            # sequentially send input into network
+            model.reset(x.shape[0])
+            for i in range(x.shape[1]):
+                model(x[:, i, :])
+                
+            loss = 0
+            for _ in range(5):
+                pred_y = model(model.zero_input(x.shape[0]))
+                loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32))
+            loss /= 5
+            
+            loss += model.reg()
+            
+            optimizer.zero_grad()
+            loss.backward(retain_graph=True)
+            optimizer.step()
+            
+            total_loss += loss
+            
+        if (epoch+1) % 1 == 0:
+            print(f"Epoch {epoch+1} / Loss: {total_loss}")

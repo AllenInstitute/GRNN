@@ -1,4 +1,7 @@
+import torch
 import numpy as np
+
+from utils import reshape_image
 
 def quantize_prediction(pred_fs, bin_size):
     return (pred_fs * bin_size + 0.5).astype('int32').astype('float32') / bin_size
@@ -18,3 +21,23 @@ def explained_variance_ratio(model, Is_te, fs_te, bin_size, quantize=False):
         psth_m = quantize_prediction(psth_m, bin_size)
     pwev_dm = np.mean([explained_variance(stpsth, psth_m) for stpsth in fs_te_np])
     return pwev_dm / ev_d
+
+def accuracy(model, data_loader, variant="p"):
+    with torch.no_grad():
+        correct, total = 0, 0
+        for x, label in data_loader:
+            x = x.reshape(x.shape[0], 28, 28)
+            x = reshape_image(x, variant=variant)
+
+            # sequentially send input into network
+            model.reset(x.shape[0])
+            for i in range(x.shape[1]):
+                model(x[:, i, :])
+
+            total_pred = torch.zeros(x.shape[0], 10)
+            for _ in range(5):
+                pred_y = model(model.zero_input(x.shape[0]))
+                total_pred += F.softmax(pred_y, dim=1) # add softmax
+            correct += torch.sum(torch.argmax(total_pred, dim=1) == label)
+            total += x.shape[0]
+    return correct / total

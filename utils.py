@@ -113,3 +113,11 @@ def plot_activation(Is, fs, actv):
     plt.plot(xs1, ys1)
     plt.xlabel("current (pA)")
     plt.ylabel("firing rate ($ms^{-1}$)")
+
+# x: shape [batch_size, 28, 28]
+# returns shape [batch_size, seq_length, in_dim]
+def reshape_image(x, variant="p"):
+    if variant == "p":
+        return x.reshape(x.shape[0], -1, 1)
+    else:
+        return x

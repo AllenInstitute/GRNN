@@ -23,35 +23,50 @@ def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fna
     pred_fs, vs = model.predict(Is)
     ts = np.arange(len(Is)) * bin_size / 1000
     
-    fig, axs = plt.subplots(3)
-    if evr is not None:
-        fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}/{evr[1]:.3f}")
+    if vs is None:
+        fig, axs = plt.subplots(2)
+        if evr is not None:
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}/{evr[1]:.3f}")
+        else:
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
+            
+        axs[0].plot(ts, fs, label="Actual")
+        axs[0].plot(ts, pred_fs, label="Predicted")
+        axs[1].plot(ts, Is)
+        axs[0].legend()
+        axs[0].set_ylabel("firing rate")
+        axs[1].set_ylabel("current (pA)")
+        axs[1].set_xlabel("time (s)")
     else:
-        fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
-        
-    axs[0].plot(ts, fs, label="Actual")
-    axs[0].plot(ts, pred_fs, label="Predicted")
-    axs[1].plot(ts, vs)
-    axs[2].plot(ts, Is)
-    axs[0].legend()
-    axs[0].set_ylabel("firing rate")
-    axs[1].set_ylabel("v")
-    axs[2].set_ylabel("current (pA)")
-    axs[2].set_xlabel("time (s)")
+        fig, axs = plt.subplots(3)
+        if evr is not None:
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}/{evr[1]:.3f}")
+        else:
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
+            
+        axs[0].plot(ts, fs, label="Actual")
+        axs[0].plot(ts, pred_fs, label="Predicted")
+        axs[1].plot(ts, vs)
+        axs[2].plot(ts, Is)
+        axs[0].legend()
+        axs[0].set_ylabel("firing rate")
+        axs[1].set_ylabel("v")
+        axs[2].set_ylabel("current (pA)")
+        axs[2].set_xlabel("time (s)")
 
     if save:
         plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
         plt.close()
 
-def plot_kernel(model, cell_id, bin_size, save=False, fname=None):
+def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
     # kernel for currents
     def k(x, a, lamb, w):
-        return torch.sum(w * a * torch.pow(lamb, x))
+        return torch.sum(w * a * torch.pow(1-lamb, x))
     
     fig = plt.figure(constrained_layout=True)
     subfigs = fig.subfigures(1, 2)
     fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
-    xs = torch.linspace(0, 6, 100)
+    xs = torch.linspace(0, xlim, 100)
     cs, ds = [], []
     a, b, d, w = model.a, model.b, model.ds, model.w
     with torch.no_grad():

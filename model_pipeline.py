@@ -84,7 +84,7 @@ def train(
                 old_coeff = params["g"]["poly_coeff"].detach().cpu()
                 new_coeff[:len(old_coeff)] = old_coeff
                 params["g"]["poly_coeff"] = new_coeff
-            model = ExponentialKernelFiringRateModel.from_params(params, freeze_g=CONFIG["freeze_activation"]).to(device)
+            model = ExponentialKernelFiringRateModel.from_params(params, freeze_g=CONFIG["freeze_activation"], device=device).to(device)
         else:
             model = ExponentialKernelFiringRateModel(
                 g, ds, bin_size, freeze_g=CONFIG["freeze_activation"], device=device

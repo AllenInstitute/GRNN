@@ -42,6 +42,121 @@ class BatchEKFR(torch.nn.Module):
         for _, p in self.named_parameters():
             p.requires_grad = True
     
+class BatchGFR(torch.nn.Module):
+    # assume k, l the same for all models
+    def __init__(self, models, freeze_g=True, device=None):
+        super().__init__()
+        self.device = device
+        self.n_models = len(models)
+        self.g = BatchPolynomialActivation([model.g for model in models])
+        self.bin_size = [model.bin_size for model in models]
+        
+        # a: Tensor([n_models, k])
+        # b: Tensor([n_models, l])
+        self.a = torch.nn.Parameter(torch.stack([model.a.detach().cpu() for model in models]))
+        self.b = torch.nn.Parameter(torch.stack([model.b.detach().cpu() for model in models]))
+        self.k = self.a.shape[1]
+        self.l = self.b.shape[1]
+        
+        if freeze_g: self.g.freeze_parameters()
+
+
+class GeneralizedFiringRateModel(torch.nn.Module):
+    def __init__(
+        self, 
+        g, # activation function
+        k: int, # number of previous timesteps for current I
+        l: int, # number of timesteps for firing rate
+        bin_size = 0,
+        freeze_g: bool = True
+    ):
+        super().__init__()
+        self.g = g
+        self.k = k
+        self.l = l
+        self.a = torch.nn.Parameter(torch.zeros(k))
+        self.b = torch.nn.Parameter(torch.zeros(l))
+        self.bin_size = bin_size
+        
+        # freeze activation parameters
+        if freeze_g: g.freeze_parameters()
+        
+    '''
+    Input:
+    currents: Tensor([batch_size])
+    ---
+    Output:
+    f: Tensor([batch_size])
+    '''
+    def forward(self, currents):
+        self.currents = torch.cat([self.currents, currents.reshape(-1, 1)], dim=1)[:,1:]
+        x = torch.einsum("j,ij->i", self.a, self.currents)
+        y = 1000 * torch.einsum("j,ij->i", self.b, self.fs)
+        f = self.g(x + y)
+        self.fs = torch.cat([self.fs, f.reshape(-1, 1)], dim=1)[:,1:]
+        return f
+    
+    def reset(self, batch_size):
+        self.currents = torch.zeros(batch_size, self.k)
+        self.fs = torch.zeros(batch_size, self.l)
+    
+    def smoothness_reg(self):
+        a = torch.cat([torch.tensor([0.0]), self.a])
+        b = torch.cat([torch.tensor([0.0]), self.b])
+        i = torch.arange(len(self.a), 0, -1).to(torch.float32)
+        j = torch.arange(len(self.b), 0, -1).to(torch.float32)
+        smooth_a = (torch.diff(a) ** 2) @ (i ** 2) / len(self.a)
+        smooth_b = (torch.diff(b) ** 2) @ (j ** 2) / len(self.b)
+        return smooth_a + smooth_b
+            
+    @classmethod
+    def from_params(cls, params, freeze_g=True):
+        g = PolynomialActivation.from_params(params["g"])
+        model = cls(g, len(model.a), len(model.b), params["bin_size"], freeze_g=freeze_g)
+        model.a = torch.nn.Parameter(params["a"])
+        model.b = torch.nn.Parameter(params["b"])
+        model.k = len(model.a)
+        model.l = len(model.b)
+        return model
+    
+    @classmethod
+    def from_ekfr(cls, ekfr_model, k, l, freeze_g=True):
+        g = PolynomialActivation.from_params(ekfr_model.g.get_params())
+        model = cls(g, k, l, ekfr_model.bin_size, freeze_g=freeze_g)
+        a = torch.tensor([ekfr_model.kernel(i, var="a") for i in range(k-1, -1, -1)]).to(torch.float32)
+        b = torch.tensor([ekfr_model.kernel(i, var="b") for i in range(l-1, -1, -1)]).to(torch.float32)
+        model.a = torch.nn.Parameter(a)
+        model.b = torch.nn.Parameter(b)
+        return model
+
+    def get_params(self):
+        return {
+            "a": self.a.detach().cpu(),
+            "b": self.b.detach().cpu(),
+            "g": self.g.get_params(),
+            "bin_size": self.bin_size
+        }
+    
+    def freeze_parameters(self):
+        for _, p in self.named_parameters():
+            p.requires_grad = False
+            
+    def unfreeze_parameters(self):
+        for _, p in self.named_parameters():
+            p.requires_grad = True
+    
+    '''
+    Input:
+    Is: Tensor([seq_len])
+    '''
+    def predict(self, Is):
+        with torch.no_grad():
+            self.reset(1)
+            pred_fs = []
+            for i in range(Is.shape[0]):
+                pred_fs.append(self(Is[i]))
+        return torch.stack(pred_fs), None
+    
 class ExponentialKernelFiringRateModel(torch.nn.Module):
     def __init__(
         self, 
@@ -63,7 +178,8 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         self.w = torch.nn.Parameter((torch.randn(self.n) * 0.001 + 1) / self.n).reshape(-1, 1).to(device)
         
         if freeze_g: self.g.freeze_parameters()
-        
+            
+    
     # outputs a tensor of shape [B], firing rate predictions at time t
     def forward(
         self,
@@ -107,7 +223,7 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
             
     def kernel(self, x, var="a"):
         a = self.a if var == "a" else self.b
-        return torch.sum(self.w * a * torch.pow(self.ds, x))
+        return torch.sum(self.w.reshape(-1) * a * torch.pow(1-self.ds, x))
     
     # Is: shape [seq_length]
     def predict(self, Is):

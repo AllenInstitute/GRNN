@@ -1,5 +1,6 @@
 import pickle
 import torch
+import torchvision
 import numpy as np
 
 #from allensdk.core.cell_types_cache import CellTypesCache

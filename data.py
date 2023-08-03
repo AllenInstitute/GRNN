@@ -7,9 +7,14 @@ import numpy as np
 
 from config import config
 
-def get_MNIST_data_loaders(batch_size):
-    train_set = torchvision.datasets.MNIST('data/mnist/train', download=True, train=True, transform=torchvision.transforms.ToTensor())
-    test_set = torchvision.datasets.MNIST('data/mnist/test', download=True, train=False, transform=torchvision.transforms.ToTensor())
+def get_MNIST_data_loaders(batch_size, variant="l"):
+    size = 28 if variant == "l" else 24
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((size, size)),
+        torchvision.transforms.ToTensor()
+    ])
+    train_set = torchvision.datasets.MNIST('data/mnist/train', download=True, train=True, transform=transform)
+    test_set = torchvision.datasets.MNIST('data/mnist/test', download=True, train=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader

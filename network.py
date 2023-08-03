@@ -46,7 +46,8 @@ class Network(torch.nn.Module):
             out_dim, 
             neuron_type="ekfr", 
             freeze_neurons=True,
-            freeze_g=True
+            freeze_g=True,
+            device=None
         ):
         super().__init__()
         
@@ -54,6 +55,7 @@ class Network(torch.nn.Module):
         self.hidden_dim = hidden_dim
         self.out_dim = out_dim
         self.neuron_type = neuron_type
+        self.device = device
         
         self.fc1 = torch.nn.Linear(in_dim, hidden_dim)
         with torch.no_grad():
@@ -62,12 +64,13 @@ class Network(torch.nn.Module):
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
         self.hidden_neurons = get_neuron_layer(hidden_dim, neuron_type=neuron_type, freeze_g=freeze_g)
+        self.hidden_neurons.device = device
         if freeze_neurons:
             self.hidden_neurons.freeze_parameters()
     
     def reset(self, batch_size):
         self.hidden_neurons.reset(batch_size)
-        self.xh = torch.zeros(batch_size, self.hidden_dim)
+        self.xh = torch.zeros(batch_size, self.hidden_dim).to(self.device)
         
     def reg(self):
         return self.hidden_neurons.smoothness_reg() if self.neuron_type == "gfr" else 0

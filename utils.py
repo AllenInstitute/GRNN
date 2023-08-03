@@ -118,6 +118,7 @@ def plot_activation(Is, fs, actv):
 # returns shape [batch_size, seq_length, in_dim]
 def reshape_image(x, variant="p"):
     if variant == "p":
+        x = x.reshape(x.shape[0], 24, 24)
         return x.reshape(x.shape[0], -1, 1)
     else:
-        return x
+        return x.reshape(x.shape[0], 28, 28)

@@ -86,7 +86,6 @@ def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1):
         total_loss = 0
 
         for x, label in train_loader:
-            x = x.reshape(x.shape[0], 28, 28)
             x = reshape_image(x, variant=variant)
             
             # sequentially send input into network

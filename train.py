@@ -46,10 +46,10 @@ def train_model(
         
         if (epoch+1) % print_every == 0:
             if scheduler is None:
-                print(f"Epoch {epoch+1} / Loss: {total_loss}")
+                print(f"Epoch {epoch+1} | Loss: {total_loss}")
             else:
                 curr_lr = scheduler.get_last_lr()
-                print(f"Epoch {epoch+1} / Loss: {total_loss} / lr: {curr_lr}")
+                print(f"Epoch {epoch+1} | Loss: {total_loss} / lr: {curr_lr}")
 
         if len(losses) >= 3 and losses[-1] == losses[-2] == losses[-3]:
             return losses
@@ -78,7 +78,7 @@ def fit_activation(
         losses.append(total_loss.item())
     return losses
 
-def train_network(model, train_loader, epochs, lr=0.005, variant="p"):        
+def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1):        
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
@@ -100,7 +100,7 @@ def train_network(model, train_loader, epochs, lr=0.005, variant="p"):
                 loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32))
             loss /= 5
             
-            loss += model.reg()
+            loss += C * model.reg()
             
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
@@ -109,4 +109,4 @@ def train_network(model, train_loader, epochs, lr=0.005, variant="p"):
             total_loss += loss
             
         if (epoch+1) % 1 == 0:
-            print(f"Epoch {epoch+1} / Loss: {total_loss}")
+            print(f"Epoch {epoch+1} | Loss: {total_loss}")

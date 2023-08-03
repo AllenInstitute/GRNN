@@ -10,9 +10,10 @@ from model import (
 def get_params(save_path="model/params/"):
     params = {}
     for fname in os.listdir(save_path):
-        with open(f"{save_path}{fname}", "rb") as f:
-            p = pickle.load(f)
-            params[int(fname.split(".")[0])] = p
+        if fname.endswith(".pickle"):
+            with open(f"{save_path}{fname}", "rb") as f:
+                p = pickle.load(f)
+                params[int(fname.split(".")[0])] = p
     return params
 
 def get_random_neurons(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr"):
@@ -32,13 +33,21 @@ def get_random_neurons(n_neurons, save_path="model/params/", threshold=0.7, neur
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr"):
+def get_neuron_layer(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr", freeze_g=True):
     neurons = get_random_neurons(n_neurons, save_path=save_path, threshold=threshold, neuron_type=neuron_type)[0]
     cls = BatchEKFR if neuron_type == "ekfr" else BatchGFR
-    return cls(neurons, freeze_g=True)
+    return cls(neurons, freeze_g=freeze_g)
 
 class Network(torch.nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, neuron_type="ekfr", freeze_neurons=True) -> None:
+    def __init__(
+            self, 
+            in_dim, 
+            hidden_dim, 
+            out_dim, 
+            neuron_type="ekfr", 
+            freeze_neurons=True,
+            freeze_g=True
+        ):
         super().__init__()
         
         self.in_dim = in_dim
@@ -52,7 +61,7 @@ class Network(torch.nn.Module):
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
-        self.hidden_neurons = get_neuron_layer(hidden_dim, neuron_type=neuron_type)
+        self.hidden_neurons = get_neuron_layer(hidden_dim, neuron_type=neuron_type, freeze_g=freeze_g)
         if freeze_neurons:
             self.hidden_neurons.freeze_parameters()
     

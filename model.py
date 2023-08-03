@@ -101,7 +101,8 @@ class BatchEKFR(torch.nn.Module):
         }
     
     def kernel(self, x, var="a"):
-        pass
+        a = self.a if var == "a" else self.b
+        return torch.sum(self.w.reshape(-1) * a * torch.pow(1-self.ds, x))
     
 class GeneralizedFiringRateModel(torch.nn.Module):
     def __init__(

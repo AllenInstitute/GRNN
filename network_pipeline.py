@@ -13,8 +13,8 @@ parser.add_argument("batch_size", type=int, help="Batch size")
 parser.add_argument("n_nodes", type=int, help="Number of recurrent nodes")
 parser.add_argument("neuron_type", type=str, help="Neuron type (gfr or ekfr)")
 parser.add_argument("variant", type=str, help="MNIST variant (p or l)")
-parser.add_argument("freeze_neurons", type=bool, help="Freeze neuron weights")
-parser.add_argument("freeze_activations", type=bool, help="Freeze activation weights")
+parser.add_argument("freeze_neurons", type=str, help="Freeze neuron weights")
+parser.add_argument("freeze_activations", type=str, help="Freeze activation weights")
 args = parser.parse_args()
 
 lr = args.lr
@@ -23,38 +23,41 @@ batch_size = args.batch_size
 hidden_dim = args.n_nodes
 neuron_type = args.neuron_type
 variant = args.variant
-freeze_neurons = args.freeze_neurons
-freeze_activations = args.freeze_activations
+freeze_neurons = eval(args.freeze_neurons)
+freeze_activations = eval(args.freeze_activations)
 
 if __name__ == "__main__":
     print(f"{lr=}\n{epochs=}\n{batch_size=}\n{hidden_dim=}\n{neuron_type=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
     
-    device = torch.device("gpu" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"{device=}")
 
     in_dim = 1 if variant == "p" else 28
     out_dim = 10
     
-    train_loader, test_loader = get_MNIST_data_loaders(batch_size)
+    train_loader, test_loader = get_MNIST_data_loaders(batch_size, variant=variant)
     model = Network(
         in_dim, 
         hidden_dim, 
         out_dim, 
         neuron_type=neuron_type, 
         freeze_neurons=freeze_neurons, 
-        freeze_g=freeze_activations
-    ).to(device) # just train on cpu for now
+        freeze_g=freeze_activations,
+        device=device
+    ).to(device)
 
     train_network(
         model, 
         train_loader, 
         epochs=epochs, 
         lr=lr, 
-        variant=variant
+        variant=variant,
+        C=0,
+        device=device
     )
 
-    train_acc = accuracy(model, train_loader, variant=variant)
-    test_acc = accuracy(model, test_loader, variant=variant)
+    train_acc = accuracy(model, train_loader, variant=variant, device=device)
+    test_acc = accuracy(model, test_loader, variant=variant, device=device)
     print(f"Train accuracy: {train_acc} | Test accuracy: {test_acc}")
 
     torch.save(

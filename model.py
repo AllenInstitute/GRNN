@@ -65,7 +65,7 @@ class BatchEKFR(torch.nn.Module):
         # [n_models, n_hidden]
         self.a = torch.nn.Parameter(torch.stack([model.a.detach().cpu() for model in models]))
         self.b = torch.nn.Parameter(torch.stack([model.b.detach().cpu() for model in models]))
-        self.w = torch.nn.Parameter(torch.stack([model.w.detach().cpu() for model in models])).reshape(self.n_models, self.n_hidden)
+        self.w = torch.nn.Parameter(torch.stack([model.w.detach().cpu() for model in models]).reshape(self.n_models, self.n_hidden))
         
         if freeze_g: self.g.freeze_parameters()
     

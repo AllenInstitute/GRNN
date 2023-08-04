@@ -78,15 +78,16 @@ def fit_activation(
         losses.append(total_loss.item())
     return losses
 
-def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1):        
+def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1, device=None):        
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[4, 8, 12, 30, 40, 50, 60, 70], gamma=0.5)
     
     for epoch in range(epochs):
         total_loss = 0
 
         for x, label in train_loader:
-            x = reshape_image(x, variant=variant)
+            x = reshape_image(x, variant=variant).to(device)
             
             # sequentially send input into network
             model.reset(x.shape[0])
@@ -96,16 +97,14 @@ def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1):
             loss = 0
             for _ in range(5):
                 pred_y = model(model.zero_input(x.shape[0]))
-                loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32))
+                loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32).to(device))
             loss /= 5
-            
             loss += C * model.reg()
-            
+
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             optimizer.step()
-            
             total_loss += loss
-            
+        scheduler.step()
         if (epoch+1) % 1 == 0:
-            print(f"Epoch {epoch+1} | Loss: {total_loss}")
+            print(f"Epoch {epoch+1} | Loss: {total_loss} | lr: {scheduler.get_last_lr()}")

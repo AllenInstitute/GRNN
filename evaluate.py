@@ -23,22 +23,23 @@ def explained_variance_ratio(model, Is_te, fs_te, bin_size, quantize=False):
     pwev_dm = np.mean([explained_variance(stpsth, psth_m) for stpsth in fs_te_np])
     return pwev_dm / ev_d
 
-def accuracy(model, data_loader, variant="p"):
+def accuracy(model, data_loader, variant="p", device=None):
     with torch.no_grad():
         correct, total = 0, 0
         for x, label in data_loader:
-            x = x.reshape(x.shape[0], 28, 28)
-            x = reshape_image(x, variant=variant)
+            x = reshape_image(x, variant=variant).to(device)
+            label = label.to(device)
 
             # sequentially send input into network
             model.reset(x.shape[0])
             for i in range(x.shape[1]):
                 model(x[:, i, :])
 
-            total_pred = torch.zeros(x.shape[0], 10)
+            total_pred = torch.zeros(x.shape[0], 10).to(device)
             for _ in range(5):
                 pred_y = model(model.zero_input(x.shape[0]))
                 total_pred += F.softmax(pred_y, dim=1) # add softmax
             correct += torch.sum(torch.argmax(total_pred, dim=1) == label)
             total += x.shape[0]
-    return correct / total
+        acc = correct / total
+    return acc.item()

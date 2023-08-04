@@ -76,7 +76,7 @@ class Network(torch.nn.Module):
         return self.hidden_neurons.smoothness_reg() if self.neuron_type == "gfr" else 0
         
     def zero_input(self, batch_size):
-        return torch.zeros(batch_size, self.in_dim)
+        return torch.zeros(batch_size, self.in_dim).to(self.device)
     
     # x: [batch_size, in_dim]
     def forward(self, x):
@@ -85,3 +85,7 @@ class Network(torch.nn.Module):
         self.xh = self.hidden_neurons(x_in + x_rec)
         out = self.fc3(self.xh)
         return out
+    
+    @classmethod
+    def from_checkpoint(fname):
+        pass

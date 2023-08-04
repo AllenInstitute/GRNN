@@ -65,7 +65,6 @@ class BatchEKFR(torch.nn.Module):
         # [n_models, n_hidden]
         self.a = torch.nn.Parameter(torch.stack([model.a.detach().cpu() for model in models]))
         self.b = torch.nn.Parameter(torch.stack([model.b.detach().cpu() for model in models]))
-        self.w = torch.nn.Parameter(torch.stack([model.w.detach().cpu() for model in models]).reshape(self.n_models, self.n_hidden))
         
         if freeze_g: self.g.freeze_parameters()
     
@@ -78,15 +77,14 @@ class BatchEKFR(torch.nn.Module):
         x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
         y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
         self.v =  torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
-        z = torch.einsum("ijk,jk->ij", self.v, self.w)
-        self.fs = self.g(z)
+        self.fs = self.g(torch.mean(self.v, dim=2))
         return self.fs # shape [B, n_models]
     
     def freeze_parameters(self):
         for _, p in self.named_parameters():
             p.requires_grad = False
             
-    def unfreeze_parameters(self):
+    def unfreeze_parameters(self): # problematic
         for _, p in self.named_parameters():
             p.requires_grad = True
             
@@ -95,14 +93,13 @@ class BatchEKFR(torch.nn.Module):
             "a": self.a.detach().cpu(),
             "b": self.b.detach().cpu(),
             "g": self.g.get_params(),
-            "w": self.w.detach().cpu(),
             "ds": self.ds.detach().cpu(),
             "bin_size": self.bin_size
         }
     
     def kernel(self, x, var="a"):
         a = self.a if var == "a" else self.b
-        return torch.einsum("ij,j->i", torch.einsum("ij,ij->ij", self.w, a), torch.pow(1 - self.ds, x))
+        return torch.einsum("ij,j->i", a, torch.pow(1 - self.ds, x))
     
 class GeneralizedFiringRateModel(torch.nn.Module):
     def __init__(
@@ -220,7 +217,6 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         self.n = len(self.ds)
         self.a = torch.nn.Parameter(torch.ones(self.n) + torch.randn(self.n) * 0.001)
         self.b = torch.nn.Parameter(torch.randn(self.n) * 0.001)
-        self.w = torch.nn.Parameter((torch.randn(self.n) * 0.001 + 1) / self.n).reshape(-1, 1).to(device)
         
         if freeze_g: self.g.freeze_parameters()
             
@@ -233,7 +229,7 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         x = torch.outer(currents, self.a) # shape [B, n]
         y = 1000 * torch.outer(self.fs, self.b) # shape [B, n]
         self.v =  (1 - self.ds) * self.v + x + y # shape [B, n]
-        self.fs = self.g(self.v @ self.w).reshape(-1) # shape [B]
+        self.fs = self.g(torch.mean(self.v, dim=1)) # shape [B]
         return self.fs
     
     def reset(self, batch_size):
@@ -246,7 +242,6 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         model = cls(g, params["ds"], params["bin_size"], freeze_g=freeze_g, device=device)
         model.a = torch.nn.Parameter(params["a"])
         model.b = torch.nn.Parameter(params["b"])
-        model.w = torch.nn.Parameter(params["w"])
         return model
 
     def get_params(self):
@@ -254,7 +249,6 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
             "a": self.a.detach().cpu(),
             "b": self.b.detach().cpu(),
             "g": self.g.get_params(),
-            "w": self.w.detach().cpu(),
             "ds": self.ds.detach().cpu(),
             "bin_size": self.bin_size
         }
@@ -263,13 +257,13 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         for _, p in self.named_parameters():
             p.requires_grad = False
             
-    def unfreeze_parameters(self):
+    def unfreeze_parameters(self): # problematic
         for _, p in self.named_parameters():
             p.requires_grad = True
             
     def kernel(self, x, var="a"):
         a = self.a if var == "a" else self.b
-        return torch.sum(self.w.reshape(-1) * a * torch.pow(1-self.ds, x))
+        return torch.sum(a * torch.pow(1-self.ds, x))
     
     # Is: shape [seq_length]
     def predict(self, Is):
@@ -298,7 +292,7 @@ class BatchPolynomialActivation(torch.nn.Module):
         
         poly_coeff = torch.zeros(self.n, self.degree + 1)
         for i, g in enumerate(gs):
-            poly_coeff[i, :g.degree+1] = g.poly_coeff.detach().cpu()
+            poly_coeff[i,:g.degree+1] = g.poly_coeff.detach().cpu()
         self.poly_coeff = torch.nn.Parameter(poly_coeff)
         
     # z: shape [B, n]
@@ -324,7 +318,7 @@ class BatchPolynomialActivation(torch.nn.Module):
             "b": self.b.detach().cpu(),
             "bin_size": self.bin_size
         }
-    
+
 class PolynomialActivation(torch.nn.Module):
     def __init__(self, degree, max_current, max_firing_rate, bin_size):
         super().__init__()

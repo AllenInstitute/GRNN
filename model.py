@@ -215,26 +215,29 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         
         self.ds = torch.nn.Parameter(ds.clone().detach(), requires_grad=False)
         self.n = len(self.ds)
-        self.a = torch.nn.Parameter(torch.ones(self.n) + torch.randn(self.n) * 0.001)
-        self.b = torch.nn.Parameter(torch.randn(self.n) * 0.001)
+        
+        a = torch.ones(self.n) + torch.randn(self.n) * 0.001
+        b = torch.randn(self.n) * 0.001
+        self.a = torch.nn.Parameter(a.reshape(1, self.n))
+        self.b = torch.nn.Parameter(b.reshape(1, self.n))
         
         if freeze_g: self.g.freeze_parameters()
             
     
-    # outputs a tensor of shape [B], firing rate predictions at time t
+    # outputs a tensor of shape [B, 1], firing rate predictions at time t
     def forward(
         self,
-        currents # shape [B], currents for time t
+        currents # shape [B, 1], currents for time t
     ):
-        x = torch.outer(currents, self.a) # shape [B, n]
-        y = 1000 * torch.outer(self.fs, self.b) # shape [B, n]
-        self.v =  (1 - self.ds) * self.v + x + y # shape [B, n]
-        self.fs = self.g(torch.mean(self.v, dim=1)) # shape [B]
-        return self.fs
+        x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
+        y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
+        self.v =  torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
+        self.fs = self.g(torch.mean(self.v, dim=2))
+        return self.fs # shape [B, n_models]
     
     def reset(self, batch_size):
-        self.v = torch.zeros(batch_size, self.n).to(self.device)
-        self.fs = torch.zeros(batch_size).to(self.device)
+        self.v = torch.zeros(batch_size, 1, self.n).to(self.device)
+        self.fs = torch.zeros(batch_size, 1).to(self.device)
     
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):
@@ -265,17 +268,16 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         a = self.a if var == "a" else self.b
         return torch.sum(a * torch.pow(1-self.ds, x))
     
-    # Is: shape [seq_length]
+    # Is: shape [B]
     def predict(self, Is):
         pred_fs = []
         vs = []
-        f = torch.zeros(1).to(self.device)
         
         with torch.no_grad():
             self.reset(1)
             for i in range(len(Is)):
-                f = self.forward(Is[i].reshape(1), f.reshape(1))
-                vs.append(self.v.clone())
+                f = self.forward(Is[i].reshape(1, 1)).reshape(1)
+                vs.append(self.v.clone().reshape(1, -1))
                 pred_fs.append(f.clone())
         return torch.stack(pred_fs).squeeze(), torch.stack(vs).squeeze()
     
@@ -323,20 +325,20 @@ class PolynomialActivation(torch.nn.Module):
     def __init__(self, degree, max_current, max_firing_rate, bin_size):
         super().__init__()
         self.degree = degree
-        self.max_current = max_current
-        self.max_firing_rate = max_firing_rate
+        self.max_current = torch.nn.Parameter(torch.tensor([max_current]), requires_grad=False)
+        self.max_firing_rate = torch.nn.Parameter(torch.tensor([max_firing_rate]), requires_grad=False)
         self.bin_size = bin_size
         
         self.p = torch.nn.Parameter(torch.tensor([d for d in range(degree+1)]), requires_grad=False)
-        self.poly_coeff = torch.nn.Parameter(torch.randn(self.degree + 1))
-        self.b = torch.nn.Parameter(torch.tensor(0.0))
+        self.poly_coeff = torch.nn.Parameter(torch.randn(1, self.degree + 1))
+        self.b = torch.nn.Parameter(torch.tensor([0.0]))
     
     # z: shape [B, 1]
     def forward(self, z):
-        x = (z - self.b) / self.max_current # shape [B, 1]
-        poly = x.pow(self.p) @ (self.poly_coeff ** 2).reshape(-1, 1) # shape [B, degree]
+        x = (z - self.b) / self.max_current # shape [B, n=1]
+        poly = torch.einsum("ijk,jk->ij", x.unsqueeze(dim=2).pow(self.p.reshape(1, 1, -1)), self.poly_coeff ** 2) # shape [B, n]
         tan = self.max_firing_rate * F.tanh(poly) # ceil is the max firing rate
-        return F.relu(tan) # shape [B, 1]
+        return F.relu(tan).to(torch.float32) # shape [B, n]
     
     # initialize based on linear approximation of data
     @classmethod
@@ -352,9 +354,10 @@ class PolynomialActivation(torch.nn.Module):
                 x1, y1 = (xs[i-1], ys[i-1]) if i - 1 > 0 else (xs[i], ys[i])
                 break
                 
-        g.b = torch.nn.Parameter(x1.clone())
+        g.b = torch.nn.Parameter(x1.clone().reshape(1))
         poly_coeff = torch.randn(degree + 1) * 1e-1
         poly_coeff[1] = np.abs((y2 - y1) / (x2 - x1) * max_current)
+        poly_coeff = poly_coeff.reshape(1, -1)
         g.poly_coeff = torch.nn.Parameter(poly_coeff)
         
         return g

@@ -22,11 +22,13 @@ def train_model(
         for Is, fs in zip(Is_tr, fs_tr):
             batch_size = Is.shape[0]
             loss = torch.zeros(batch_size).to(model.device)
-            f = torch.zeros(batch_size, device=model.device)
             model.reset(batch_size)
             
+            # Is has shape [B, seq_len]
             for i in range(Is.shape[1]):
-                f = model(Is[:, i], f)
+                # Is[:, i] has shape [B], convert to [B,1]
+                # model output has shape [B,1], convert to [B]
+                f = model(Is[:, i].unsqueeze(1)).squeeze()
                 
                 # up-weight loss for non-zero firing rate
                 alpha = torch.ones(batch_size).to(model.device)
@@ -49,7 +51,7 @@ def train_model(
                 print(f"Epoch {epoch+1} | Loss: {total_loss}")
             else:
                 curr_lr = scheduler.get_last_lr()
-                print(f"Epoch {epoch+1} | Loss: {total_loss} / lr: {curr_lr}")
+                print(f"Epoch {epoch+1} | Loss: {total_loss} | lr: {curr_lr}")
 
         if len(losses) >= 3 and losses[-1] == losses[-2] == losses[-3]:
             return losses
@@ -68,8 +70,9 @@ def fit_activation(
     for _ in range(epochs):
         total_loss = 0
         for current, fr in zip(Is, fs):
+            current = current.reshape(1, 1)
             pred_fr = actv(current)
-            loss = criterion(pred_fr * actv.bin_size, fr * actv.bin_size)
+            loss = criterion(pred_fr * actv.bin_size, fr.reshape(1, 1) * actv.bin_size)
             total_loss += loss
         
         optimizer.zero_grad()

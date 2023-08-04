@@ -2,12 +2,12 @@ import subprocess
 import argparse
 import numpy as np
 
+parser = argparse.ArgumentParser()
+parser.add_argument("cell_ids", type=str, help="CSV file containing cell ids to process")
+parser.add_argument("chunk_num", type=int, help="Chunk number")
+args = parser.parse_args()
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("cell_ids", type=str, help="CSV file containing cell ids to process")
-    parser.add_argument("chunk_num", type=int, help="Chunk number")
-    args = parser.parse_args()
-    
     cell_ids = [int(x) for x in np.genfromtxt(args.cell_ids, delimiter=',')]
     chunk_size = int(len(cell_ids) / args.chunk_num + 0.5)
 

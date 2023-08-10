@@ -69,8 +69,12 @@ def get_activations(
     return gs[np.argmin(losses)]
 
 def train(
-    Is, 
-    fs, 
+    Is_tr, 
+    fs_tr, 
+    Is_val, 
+    fs_val, 
+    Is_te, 
+    fs_te,  
     g,
     ds,
     cell_id, 
@@ -78,7 +82,7 @@ def train(
     device = None,
     hparams=[{"lr": 0.03, "gamma": 0.85, "step_size": 5, "epochs": 100}]
 ):
-    best_model, best_losses = None, [0, 1e10]
+    best_model, best_evr1, best_losses = None, -1e10, [0, 1e10]
     
     for i, hs in enumerate(hparams):
         print(f"Run {i+1}/{len(hparams)}: {hs}")
@@ -93,15 +97,16 @@ def train(
                 g, ds, bin_size, freeze_g=config["freeze_activation"], device=device).to(device)
 
         criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none")
-        optimizer = torch.optim.RMSprop(model.parameters(), lr=hs["lr"], centered=True)
+        #optimizer = torch.optim.RMSprop(model.parameters(), lr=hs["lr"], centered=True)
+        optimizer = torch.optim.Adam(model.parameters(), lr=hs["lr"])
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, gamma=hs["gamma"], step_size=hs["step_size"])
 
         losses = train_model(
             model, 
             criterion, 
             optimizer,
-            Is,
-            fs,
+            Is_tr,
+            fs_tr,
             epochs = hs["epochs"],
             print_every = 1,
             bin_size = bin_size,
@@ -109,11 +114,16 @@ def train(
             scheduler = scheduler
         )
         
-        if best_losses[-1] > losses[-1]:
+        evr1 = explained_variance_ratio(model, Is_val[0], fs_val[0], bin_size)
+        
+        if evr1 > best_evr1:
+            best_evr1 = evr1
             best_losses = losses
             best_model = model
     
-    return best_model, best_losses
+    best_evr2 = explained_variance_ratio(best_model, Is_te[0], fs_te[0], bin_size)
+    
+    return best_model, best_evr1, best_evr2, best_losses
 
 def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device=None, g=None):
     print("Loading data for activation")
@@ -153,14 +163,14 @@ def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, d
         Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims = get_train_test_data(data, bin_size, device=device)
         Is_tr, fs_tr, stims = sklearn.utils.shuffle(Is_tr, fs_tr, stims) # list of Tensors, each with shape [B, seq_len]
         
+        if len(Is_te) == 0 or len(Is_val) == 0:
+            print("No noise 1/2 data. Skipping.")
+            raise Exception
+        
         print("Start training model...")
         hparams = config["hparams"]
-        model, losses = train(Is_tr, fs_tr, g.to(device), ds, cell_id, bin_size, device=device, hparams=hparams)
+        model, evr1, evr2, losses = train(Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, g.to(device), ds, cell_id, bin_size, device=device, hparams=hparams)
         
-        print("Computing evr")
-        print("Length of Is_val and Is_te:", len(Is_val), len(Is_te))
-        evr1 = explained_variance_ratio(model, Is_val[0], fs_val[0], bin_size)
-        evr2 = explained_variance_ratio(model, Is_te[0], fs_te[0], bin_size)
         print(f"{evr1}, {evr2}")
         
         return model.get_params(), evr1, evr2, losses
@@ -187,6 +197,11 @@ def model_pipeline(cell_id, bin_size, activation_bin_size, degree, max_firing_ra
             "losses": losses,
             "bin_size": bin_size
         }
+        
+        # referesh parameters
+        if params_old is not None:
+            with open(f"{save_path}{cell_id}.pickle", 'rb') as f:
+                params_old = pickle.load(f)
         
         if params_old is None or evr1 > params_old["evr1"]:
             print("Saving model params")

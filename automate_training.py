@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     for bin_size in bin_sizes:
         for activation_bin_size, degree in zip(activation_bin_sizes, degrees):
-            for n in n_kernels:
-                save_path = f"model/params/{bin_size}_{activation_bin_size}_{n}/"
-                for i in range(chunk_num):
-                    if activation_bin_size >= bin_size:
+            if activation_bin_size >= bin_size:
+                for n in n_kernels:
+                    save_path = f"model/params/{bin_size}_{activation_bin_size}_{n}/"
+                    for i in range(chunk_num):
                         run_jobs(i, bin_size, activation_bin_size, degree, n, save_path, args.config_path)

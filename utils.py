@@ -19,14 +19,14 @@ def get_max_firing_rate(data):
     diffs = np.concatenate([np.diff(d["spike_times"]) for d in data])
     return np.max(1 / diffs) / 1000 # return in ms^-1
 
-def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fname=None):    
+def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fname=None):
     pred_fs, vs = model.predict(Is)
     ts = np.arange(len(Is)) * bin_size / 1000
     
     if vs is None:
         fig, axs = plt.subplots(2)
         if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}/{evr[1]:.3f}")
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
         else:
             fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
             
@@ -34,13 +34,13 @@ def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fna
         axs[0].plot(ts, pred_fs, label="Predicted")
         axs[1].plot(ts, Is)
         axs[0].legend()
-        axs[0].set_ylabel("firing rate")
-        axs[1].set_ylabel("current (pA)")
-        axs[1].set_xlabel("time (s)")
+        axs[0].set_ylabel("firing rate ($ms^{-1}$)")
+        axs[1].set_ylabel("current ($pA$)")
+        axs[1].set_xlabel("time ($s$)")
     else:
         fig, axs = plt.subplots(3)
         if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}/{evr[1]:.3f}")
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
         else:
             fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
             
@@ -49,30 +49,25 @@ def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fna
         axs[1].plot(ts, vs)
         axs[2].plot(ts, Is)
         axs[0].legend()
-        axs[0].set_ylabel("firing rate")
+        axs[0].set_ylabel("firing rate ($ms^{-1}$)")
         axs[1].set_ylabel("v")
-        axs[2].set_ylabel("current (pA)")
-        axs[2].set_xlabel("time (s)")
+        axs[2].set_ylabel("current ($pA$)")
+        axs[2].set_xlabel("time ($s$)")
 
     if save:
         plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
         plt.close()
 
 def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
-    # kernel for currents
-    def k(x, a, lamb, w):
-        return torch.sum(w * a * torch.pow(1-lamb, x))
-    
     fig = plt.figure(constrained_layout=True)
     subfigs = fig.subfigures(1, 2)
     fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
     xs = torch.linspace(0, xlim, 100)
     cs, ds = [], []
-    a, b, d, w = model.a, model.b, model.ds, model.w
     with torch.no_grad():
         for x in xs:
-            cs.append(k(x, a, d, w))
-            ds.append(k(x, b, d, w))
+            cs.append(model.kernel(x, var="a"))
+            ds.append(model.kernel(x, var="b"))
     
     axs0 = subfigs[0].subplots(2)
     axs0[0].plot(xs,cs)
@@ -81,14 +76,12 @@ def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
     axs0[1].set_ylabel("$k_b(x)$")
     axs0[1].set_xlabel("$x$")
     
-    axs1 = subfigs[1].subplots(3)
-    axs1[0].bar(list(range(len(a))), a.detach().reshape(-1))
-    axs1[1].bar(list(range(len(b))), b.detach().reshape(-1))
-    axs1[2].bar(list(range(len(w))), w.detach().reshape(-1))
+    axs1 = subfigs[1].subplots(2)
+    axs1[0].bar(list(range(model.a.shape[1])), model.a.detach().reshape(-1))
+    axs1[1].bar(list(range(model.b.shape[1])), model.b.detach().reshape(-1))
     axs1[0].set_ylabel("$a_i$")
     axs1[1].set_ylabel("$b_i$")
-    axs1[2].set_ylabel("$w_i$")
-    axs1[2].set_xlabel("$i$")
+    axs1[1].set_xlabel("$i$")
     
     fig.set_size_inches(8, 5, forward=True)
 
@@ -97,13 +90,10 @@ def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
         plt.close()
         
 def get_activation_plot(actv, start=-100, end=270):
-    currents = torch.linspace(start, end, steps=300)
-    fs = []
+    currents = torch.linspace(start, end, steps=300).reshape(-1, 1)
     with torch.no_grad():
-        for i in currents:
-            f = actv(i).squeeze().item()
-            fs.append(f)
-    return currents, fs
+        fs = actv(currents)
+    return currents.reshape(-1), fs.reshape(-1)
 
 def plot_activation(Is, fs, actv):
     plt.figure()

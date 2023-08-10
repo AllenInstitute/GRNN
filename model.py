@@ -268,7 +268,7 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         a = self.a if var == "a" else self.b
         return torch.sum(a * torch.pow(1-self.ds, x))
     
-    # Is: shape [B]
+    # Is: shape [seq_length]
     def predict(self, Is):
         pred_fs = []
         vs = []
@@ -365,7 +365,7 @@ class PolynomialActivation(torch.nn.Module):
     @classmethod
     def from_params(cls, params):
         poly_coeff = torch.nn.Parameter(params["poly_coeff"])
-        degree = len(poly_coeff) - 1
+        degree = poly_coeff.shape[1] - 1
         max_current = params["max_current"]
         max_firing_rate = params["max_firing_rate"]
         bin_size = params["bin_size"]

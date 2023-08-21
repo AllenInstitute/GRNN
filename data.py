@@ -3,7 +3,7 @@ import torch
 import torchvision
 import numpy as np
 
-from allensdk.core.cell_types_cache import CellTypesCache
+#from allensdk.core.cell_types_cache import CellTypesCache
 
 from config import config
 
@@ -16,7 +16,7 @@ def get_MNIST_data_loaders(batch_size, variant="l"):
     train_set = torchvision.datasets.MNIST('data/mnist/train', download=True, train=True, transform=transform)
     test_set = torchvision.datasets.MNIST('data/mnist/test', download=True, train=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
     return train_loader, test_loader
 
 def get_data(cell_id, aligned=True, patch_seq=False):

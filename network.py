@@ -7,7 +7,7 @@ from model import (
     BatchEKFR, BatchGFR, GeneralizedFiringRateModel, ExponentialKernelFiringRateModel
 )
 
-def get_params(save_path="model/params/"):
+def get_params(save_path="model/params/20_20_5/"):
     params = {}
     for fname in os.listdir(save_path):
         if fname.endswith(".pickle"):
@@ -16,7 +16,7 @@ def get_params(save_path="model/params/"):
                 params[int(fname.split(".")[0])] = p
     return params
 
-def get_random_neurons(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr"):
+def get_random_neurons(n_neurons, save_path="model/params/20_20_5/", threshold=0.7, neuron_type="ekfr"):
     params = get_params(save_path)
     cell_ids = []
 
@@ -33,7 +33,7 @@ def get_random_neurons(n_neurons, save_path="model/params/", threshold=0.7, neur
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, save_path="model/params/", threshold=0.7, neuron_type="ekfr", freeze_g=True):
+def get_neuron_layer(n_neurons, save_path="model/params/20_20_5/", threshold=0.7, neuron_type="ekfr", freeze_g=True):
     neurons = get_random_neurons(n_neurons, save_path=save_path, threshold=threshold, neuron_type=neuron_type)[0]
     cls = BatchEKFR if neuron_type == "ekfr" else BatchGFR
     return cls(neurons, freeze_g=freeze_g)

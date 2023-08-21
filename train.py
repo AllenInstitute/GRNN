@@ -84,7 +84,7 @@ def fit_activation(
 def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1, device=None):        
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[4, 8, 12, 30, 40, 50, 60, 70], gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 40, 60], gamma=0.5)
     
     for epoch in range(epochs):
         total_loss = 0
@@ -95,7 +95,11 @@ def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1, de
             # sequentially send input into network
             model.reset(x.shape[0])
             for i in range(x.shape[1]):
-                model(x[:, i, :])
+                if variant == "p" and i < int(x.shape[1] * 16 / (model.hidden_dim / 16) ** 2):
+                    with torch.no_grad():
+                        model(x[:, i, :])
+                else:
+                    model(x[:, i, :])
                 
             loss = 0
             for _ in range(5):

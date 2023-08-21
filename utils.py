@@ -26,7 +26,7 @@ def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fna
     if vs is None:
         fig, axs = plt.subplots(2)
         if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr:.3f}")
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
         else:
             fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
             
@@ -40,7 +40,7 @@ def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fna
     else:
         fig, axs = plt.subplots(3)
         if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr:.3f}")
+            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
         else:
             fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
             

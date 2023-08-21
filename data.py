@@ -16,7 +16,7 @@ def get_MNIST_data_loaders(batch_size, variant="l"):
     train_set = torchvision.datasets.MNIST('data/mnist/train', download=True, train=True, transform=transform)
     test_set = torchvision.datasets.MNIST('data/mnist/test', download=True, train=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
 
 def get_data(cell_id, aligned=True, patch_seq=False):
@@ -168,14 +168,10 @@ def get_train_test_data(data, bin_size, device=None, patch_seq=False):
         if s == "Noise 1":
             Is_val.append(Is_padded)
             fs_val.append(fs_padded)
-        elif s == "Noise 2":
+        if s == "Noise 2":
             Is_te.append(Is_padded)
             fs_te.append(fs_padded)
-        elif patch_seq and s in ["Long Square", "Ramp"]:
-            Is_tr.append(Is_padded)
-            fs_tr.append(fs_padded)
-            stims.append(s)
-        elif s != "Test":
+        if s in ["Long Square", "Ramp", "Noise 1"]:
             Is_tr.append(Is_padded)
             fs_tr.append(fs_padded)
             stims.append(s)

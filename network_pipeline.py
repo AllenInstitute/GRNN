@@ -1,5 +1,6 @@
 import torch
 import argparse
+import os
 
 from network import Network
 from data import get_MNIST_data_loaders
@@ -59,7 +60,9 @@ if __name__ == "__main__":
     train_acc = accuracy(model, train_loader, variant=variant, device=device)
     test_acc = accuracy(model, test_loader, variant=variant, device=device)
     print(f"Train accuracy: {train_acc} | Test accuracy: {test_acc}")
-
+    
+    save_path = f"model/network_params/{variant}_{neuron_type}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
+    
     torch.save(
         {
             "model_state_dict": model.to(torch.device("cpu")).state_dict(),
@@ -73,5 +76,5 @@ if __name__ == "__main__":
             "freeze_neurons": freeze_neurons,
             "freeze_activations": freeze_activations
         },
-        f"model/network_params/{variant}_{neuron_type}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
+        save_path
     )

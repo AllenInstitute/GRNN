@@ -59,7 +59,7 @@ class Network(torch.nn.Module):
         
         self.fc1 = torch.nn.Linear(in_dim, hidden_dim)
         with torch.no_grad():
-            self.fc1.weight.normal_(1, 1)
+            self.fc1.weight.normal_(1.5, 3)
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
@@ -85,7 +85,3 @@ class Network(torch.nn.Module):
         self.xh = self.hidden_neurons(x_in + x_rec)
         out = self.fc3(self.xh)
         return out
-    
-    @classmethod
-    def from_checkpoint(fname):
-        pass

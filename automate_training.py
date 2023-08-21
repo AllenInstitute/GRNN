@@ -13,7 +13,7 @@ args = parser.parse_args()
 bin_sizes = [10, 20, 50, 100]
 activation_bin_sizes = [20, 100]
 degrees = [1, 3]
-n_kernels = [5, 7]
+Cs = [1, 0.5, 0.1, 0.005, 0.001, 0.0005]
 
 sbatch_script = "scripts/run_model_pipeline.sh"
 
@@ -25,9 +25,9 @@ def generate_chunks(cell_ids, chunk_num, save_path):
         with open(f"{save_path}chunk{i}.csv", "w") as f:
             f.write(",".join(map(str, chunk)))
 
-def run_jobs(i, bin_size, activation_bin_size, degree, n, save_path, config_path):
+def run_jobs(i, bin_size, activation_bin_size, degree, C, save_path, config_path):
     Path(save_path).mkdir(parents=True, exist_ok=True)
-    command = ["sbatch", sbatch_script, i, bin_size, activation_bin_size, degree, n, save_path, config_path]
+    command = ["sbatch", sbatch_script, i, bin_size, activation_bin_size, degree, C, save_path, config_path]
     command = [str(component) for component in command]
     print(f"Running command: {' '.join(command)}")
     subprocess.run(command)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     for bin_size in bin_sizes:
         for activation_bin_size, degree in zip(activation_bin_sizes, degrees):
             if activation_bin_size >= bin_size:
-                for n in n_kernels:
-                    save_path = f"model/params/{bin_size}_{activation_bin_size}_{n}/"
+                for C in Cs:
+                    save_path = f"model/params/{bin_size}_{activation_bin_size}_{C}/"
                     for i in range(chunk_num):
-                        run_jobs(i, bin_size, activation_bin_size, degree, n, save_path, args.config_path)
+                        run_jobs(i, bin_size, activation_bin_size, degree, C, save_path, args.config_path)

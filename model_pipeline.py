@@ -16,7 +16,7 @@ parser.add_argument("chunk_id", type=int)
 parser.add_argument("bin_size", type=int)
 parser.add_argument("activation_bin_size", type=int)
 parser.add_argument("degree", type=int)
-parser.add_argument("n_kernels", type=int)
+parser.add_argument("C", type=float)
 parser.add_argument("save_path", type=str)
 parser.add_argument("config_path", type=str)
 args = parser.parse_args()
@@ -25,7 +25,7 @@ chunk_id = args.chunk_id
 bin_size = args.bin_size
 activation_bin_size = args.activation_bin_size
 degree = args.degree
-n_kernels = args.n_kernels
+C = args.C
 save_path = args.save_path
 
 with open(args.config_path, "r") as f:
@@ -82,7 +82,7 @@ def train(
     device = None,
     hparams=[{"lr": 0.03, "gamma": 0.85, "step_size": 5, "epochs": 100}]
 ):
-    best_model, best_evr1, best_losses = None, -1e10, [0, 1e10]
+    best_model, best_evr1, best_losses, best_test_losses = None, -1e10, [], []
     
     for i, hs in enumerate(hparams):
         print(f"Run {i+1}/{len(hparams)}: {hs}")
@@ -91,27 +91,30 @@ def train(
             with open(f"{save_path}{cell_id}.pickle", "rb") as f:
                 params = pickle.load(f)["params"]
             model = ExponentialKernelFiringRateModel.from_params(
-                params, freeze_g=config["freeze_activation"], device=device).to(device)
+                params, freeze_g=config["freeze_activation"], device=device
+            ).to(device)
         else:
             model = ExponentialKernelFiringRateModel(
-                g, ds, bin_size, freeze_g=config["freeze_activation"], device=device).to(device)
+                g, ds, bin_size, freeze_g=config["freeze_activation"], device=device
+            ).to(device)
 
-        criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none")
-        #optimizer = torch.optim.RMSprop(model.parameters(), lr=hs["lr"], centered=True)
+        criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none", eps=config["eps"])
         optimizer = torch.optim.Adam(model.parameters(), lr=hs["lr"])
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, gamma=hs["gamma"], step_size=hs["step_size"])
 
-        losses = train_model(
+        losses, test_losses = train_model(
             model, 
             criterion, 
             optimizer,
             Is_tr,
             fs_tr,
+            Is_te,
+            fs_te,
             epochs = hs["epochs"],
             print_every = 1,
             bin_size = bin_size,
-            up_factor = config["up_factor"],
-            scheduler = scheduler
+            scheduler = scheduler,
+            C = C
         )
         
         evr1 = explained_variance_ratio(model, Is_val[0], fs_val[0], bin_size)
@@ -119,11 +122,12 @@ def train(
         if evr1 > best_evr1:
             best_evr1 = evr1
             best_losses = losses
+            best_test_losses = test_losses
             best_model = model
     
     best_evr2 = explained_variance_ratio(best_model, Is_te[0], fs_te[0], bin_size)
     
-    return best_model, best_evr1, best_evr2, best_losses
+    return best_model, best_evr1, best_evr2, best_losses, best_test_losses
 
 def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device=None, g=None):
     print("Loading data for activation")
@@ -152,11 +156,12 @@ def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, d
     else:
         print("Loading data for model...")
 
-        base = np.exp(np.log(1000) / 1000)
-        ks = torch.round(torch.pow(base, torch.linspace(1, 1000, n_kernels)))
-        ds = torch.round(1 - torch.exp(-bin_size / 1000 * ks), decimals=4)
+        taus = torch.tensor([10, 20, 50, 100, 200, 500, 1000, 2000])
+        taus = taus[taus >= bin_size]
+        ds = 1 - torch.exp(-bin_size /  taus)
+        ds = torch.cat([torch.ones(1), ds])
         ds = ds.to(torch.float32)
-        print(f"Using timescales: {ks}")
+        print(f"Using timescales: {taus}")
         print(f"Corresponding decay rates: {ds}")
 
         data = get_data(cell_id, aligned=False)
@@ -169,11 +174,13 @@ def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, d
         
         print("Start training model...")
         hparams = config["hparams"]
-        model, evr1, evr2, losses = train(Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, g.to(device), ds, cell_id, bin_size, device=device, hparams=hparams)
+        model, evr1, evr2, losses, test_losses = train(
+            Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, g.to(device), ds, cell_id, bin_size, device=device, hparams=hparams
+        )
         
         print(f"{evr1}, {evr2}")
         
-        return model.get_params(), evr1, evr2, losses
+        return model.get_params(), evr1, evr2, losses, test_losses
 
 def model_pipeline(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device):        
     retrain = config["retrain_model"]
@@ -189,12 +196,16 @@ def model_pipeline(cell_id, bin_size, activation_bin_size, degree, max_firing_ra
         print("Model doesn't exist")
             
     if retrain or params_old is None or g is None:
-        p, evr1, evr2, losses = fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device=device, g=g)
+        p, evr1, evr2, losses, test_losses = fit_model(
+            cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device=device, g=g
+        )
+
         params = {
             "params": p,
             "evr1": evr1,
             "evr2": evr2,
-            "losses": losses,
+            "train_losses": losses,
+            "test_losses": test_losses,
             "bin_size": bin_size
         }
         
@@ -213,7 +224,7 @@ if __name__ == "__main__":
     cell_ids = np.genfromtxt(f'misc/chunks/chunk{chunk_id}.csv', delimiter=',')
     cell_ids = [int(cell_ids)] if cell_ids.shape == () else list(map(int, cell_ids))
 
-    print(f"{device=}\n{chunk_id=}\n{bin_size=}\n{activation_bin_size=}\n{degree=}\n{n_kernels=}")
+    print(f"{device=}\n{chunk_id=}\n{bin_size=}\n{activation_bin_size=}\n{degree=}\n{C=}")
     print(config)
 
     for i, cell_id in enumerate(cell_ids):

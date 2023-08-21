@@ -239,6 +239,9 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         self.v = torch.zeros(batch_size, 1, self.n).to(self.device)
         self.fs = torch.zeros(batch_size, 1).to(self.device)
     
+    def l1_reg(self):
+        return self.a.norm(p=1) + self.b.norm(p=1)
+
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):
         g = PolynomialActivation.from_params(params["g"])

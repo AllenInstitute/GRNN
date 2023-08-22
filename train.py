@@ -14,7 +14,6 @@ def train_model(
     epochs: int = 100,
     print_every: int = 10,
     bin_size = 20,
-    scheduler = None,
     C = 0
 ):
     train_losses = []
@@ -36,7 +35,8 @@ def train_model(
                 f = model(Is[:, i].unsqueeze(1)).squeeze()
                 loss += criterion(f * bin_size, fs[:, i] * bin_size)
             
-            reg = C * model.l1_reg()
+            # L0 regularization
+            reg = C * model.reg(p=0)
             mean_loss = torch.mean(loss)
             obj = mean_loss + reg
             optimizer.zero_grad()
@@ -50,9 +50,6 @@ def train_model(
 
         # normalize by number of batches
         train_losses.append(total_loss / n)
-
-        if scheduler is not None:
-            scheduler.step()
 
         n = 0
         total_test_loss = 0
@@ -76,11 +73,7 @@ def train_model(
             test_losses.append(total_test_loss / n)
         
         if (epoch+1) % print_every == 0:
-            if scheduler is None:
-                print(f"Epoch {epoch+1} | Loss: {total_loss}")
-            else:
-                curr_lr = scheduler.get_last_lr()
-                print(f"Epoch {epoch+1} | Loss: {total_loss} | lr: {curr_lr}")
+            print(f"Epoch {epoch+1} | Loss: {total_loss}")
 
         if len(train_losses) >= 3 and train_losses[-1] == train_losses[-2] == train_losses[-3]:
             return train_losses, test_losses

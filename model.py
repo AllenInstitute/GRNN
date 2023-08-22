@@ -216,8 +216,12 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         self.ds = torch.nn.Parameter(ds.clone().detach(), requires_grad=False)
         self.n = len(self.ds)
         
-        a = torch.ones(self.n) + torch.randn(self.n) * 0.001
+        temp = 10
+        a = torch.exp(-temp * torch.arange(self.n))
+        a = a / a.sum() * self.n
+        
         b = torch.randn(self.n) * 0.001
+        b[0:] = 0
         self.a = torch.nn.Parameter(a.reshape(1, self.n))
         self.b = torch.nn.Parameter(b.reshape(1, self.n))
         
@@ -239,8 +243,8 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
         self.v = torch.zeros(batch_size, 1, self.n).to(self.device)
         self.fs = torch.zeros(batch_size, 1).to(self.device)
     
-    def l1_reg(self):
-        return self.a.norm(p=1) + self.b.norm(p=1)
+    def reg(self, p=1):
+        return self.a.norm(p=p) + self.b.norm(p=p)
 
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):

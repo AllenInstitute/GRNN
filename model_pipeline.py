@@ -80,7 +80,7 @@ def train(
     cell_id, 
     bin_size,  
     device = None,
-    hparams=[{"lr": 0.03, "gamma": 0.85, "step_size": 5, "epochs": 100}]
+    hparams=[{"lr": 1e-3, "epochs": 100}]
 ):
     best_model, best_evr1, best_losses, best_test_losses = None, -1e10, [], []
     
@@ -100,7 +100,6 @@ def train(
 
         criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none", eps=config["eps"])
         optimizer = torch.optim.Adam(model.parameters(), lr=hs["lr"])
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, gamma=hs["gamma"], step_size=hs["step_size"])
 
         losses, test_losses = train_model(
             model, 
@@ -113,7 +112,6 @@ def train(
             epochs = hs["epochs"],
             print_every = 1,
             bin_size = bin_size,
-            scheduler = scheduler,
             C = C
         )
         

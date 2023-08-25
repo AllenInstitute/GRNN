@@ -1,6 +1,5 @@
 import torch
 import argparse
-import os
 
 from network import Network
 from data import get_MNIST_data_loaders
@@ -12,7 +11,6 @@ parser.add_argument("lr", type=float, help="Learing rate")
 parser.add_argument("epochs", type=int, help="Number of training epochs")
 parser.add_argument("batch_size", type=int, help="Batch size")
 parser.add_argument("n_nodes", type=int, help="Number of recurrent nodes")
-parser.add_argument("neuron_type", type=str, help="Neuron type (gfr or ekfr)")
 parser.add_argument("variant", type=str, help="MNIST variant (p or l)")
 parser.add_argument("freeze_neurons", type=str, help="Freeze neuron weights")
 parser.add_argument("freeze_activations", type=str, help="Freeze activation weights")
@@ -22,13 +20,12 @@ lr = args.lr
 epochs = args.epochs
 batch_size = args.batch_size
 hidden_dim = args.n_nodes
-neuron_type = args.neuron_type
 variant = args.variant
 freeze_neurons = eval(args.freeze_neurons)
 freeze_activations = eval(args.freeze_activations)
 
 if __name__ == "__main__":
-    print(f"{lr=}\n{epochs=}\n{batch_size=}\n{hidden_dim=}\n{neuron_type=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
+    print(f"{lr=}\n{epochs=}\n{batch_size=}\n{hidden_dim=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"{device=}")
@@ -41,7 +38,6 @@ if __name__ == "__main__":
         in_dim, 
         hidden_dim, 
         out_dim, 
-        neuron_type=neuron_type, 
         freeze_neurons=freeze_neurons, 
         freeze_g=freeze_activations,
         device=device
@@ -61,7 +57,7 @@ if __name__ == "__main__":
     test_acc = accuracy(model, test_loader, variant=variant, device=device)
     print(f"Train accuracy: {train_acc} | Test accuracy: {test_acc}")
     
-    save_path = f"model/network_params/{variant}_{neuron_type}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
+    save_path = f"model/network_params/{variant}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
     
     torch.save(
         {
@@ -71,7 +67,6 @@ if __name__ == "__main__":
             "lr": lr,
             "epochs": epochs,
             "hidden_dim": hidden_dim,
-            "neuron_type": neuron_type,
             "variant": variant,
             "freeze_neurons": freeze_neurons,
             "freeze_activations": freeze_activations

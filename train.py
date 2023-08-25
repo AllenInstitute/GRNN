@@ -103,10 +103,9 @@ def fit_activation(
         losses.append(total_loss.item())
     return losses
 
-def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1, device=None):        
+def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", C=1, device=None):        
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 110], gamma=0.5)
     
     for epoch in range(epochs):
         total_loss = 0
@@ -135,6 +134,6 @@ def train_network(model, train_loader, epochs=30, lr=0.005, variant="p", C=1, de
             loss.backward(retain_graph=True)
             optimizer.step()
             total_loss += loss
-        scheduler.step()
+            
         if (epoch+1) % 1 == 0:
-            print(f"Epoch {epoch+1} | Loss: {total_loss} | lr: {scheduler.get_last_lr()}")
+            print(f"Epoch {epoch+1} | Loss: {total_loss}")

@@ -1,5 +1,6 @@
 import torch
 import argparse
+import numpy as np
 
 from network import Network
 from data import get_MNIST_data_loaders
@@ -24,6 +25,44 @@ variant = args.variant
 freeze_neurons = eval(args.freeze_neurons)
 freeze_activations = eval(args.freeze_activations)
 
+def load_network(fname):
+    state = torch.load(fname)
+    model = Network(
+        1 if state["variant"] == "p" else 28, 
+        state["hidden_dim"], 
+        10,
+        freeze_neurons=state["freeze_neurons"], 
+        freeze_g=state["freeze_activations"]
+    )
+    model.load_state_dict(state["model_state_dict"])
+    return model
+
+def permuted_network(fname, variant):
+    model = load_network(fname)
+
+    in_dim = model.in_dim
+    hidden_dim = model.hidden_dim
+    out_dim = model.out_dim
+    
+    new_model = Network(
+        in_dim, 
+        hidden_dim, 
+        out_dim,
+        freeze_neurons=True, 
+        freeze_g=True
+    )
+
+    idxs = (np.random.rand(256) * 256).astype(int)
+    new_model.hidden_neurons.g.max_current = torch.nn.Parameter(model.hidden_neurons.g.max_current.detach().clone()[idxs], requires_grad=False)
+    new_model.hidden_neurons.g.max_firing_rate = torch.nn.Parameter(model.hidden_neurons.g.max_firing_rate.detach().clone()[idxs], requires_grad=False)
+    new_model.hidden_neurons.g.max_firing_rate = torch.nn.Parameter(model.hidden_neurons.g.max_firing_rate.detach().clone()[idxs], requires_grad=False)
+    new_model.hidden_neurons.g.b = torch.nn.Parameter(model.hidden_neurons.g.b.detach().clone()[idxs], requires_grad=False)
+    new_model.hidden_neurons.g.poly_coeff = torch.nn.Parameter(model.hidden_neurons.g.poly_coeff.detach().clone()[idxs], requires_grad=False)
+    new_model.hidden_neurons.a = torch.nn.Parameter(model.hidden_neurons.a.detach().clone()[idxs, :], requires_grad=False)
+    new_model.hidden_neurons.b = torch.nn.Parameter(model.hidden_neurons.b.detach().clone()[idxs, :], requires_grad=False)
+
+    return new_model
+
 if __name__ == "__main__":
     print(f"{lr=}\n{epochs=}\n{batch_size=}\n{hidden_dim=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
     
@@ -34,14 +73,18 @@ if __name__ == "__main__":
     out_dim = 10
     
     train_loader, test_loader = get_MNIST_data_loaders(batch_size, variant=variant)
-    model = Network(
-        in_dim, 
-        hidden_dim, 
-        out_dim, 
-        freeze_neurons=freeze_neurons, 
-        freeze_g=freeze_activations,
-        device=device
-    ).to(device)
+
+    if freeze_neurons:
+        model = permuted_network(f"model/network_params/{variant}_{hidden_dim}_False_True.pt", variant)
+    else:
+        model = Network(
+            in_dim, 
+            hidden_dim, 
+            out_dim, 
+            freeze_neurons=freeze_neurons, 
+            freeze_g=freeze_activations,
+            device=device
+        ).to(device)
 
     train_network(
         model, 

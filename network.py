@@ -5,7 +5,7 @@ import random
 
 from model import BatchEKFR, ExponentialKernelFiringRateModel
 
-def get_params(save_path="model/params/20_20_5/"):
+def get_params(save_path="model/params/20_20_0/"):
     params = {}
     for fname in os.listdir(save_path):
         if fname.endswith(".pickle"):
@@ -14,7 +14,7 @@ def get_params(save_path="model/params/20_20_5/"):
                 params[int(fname.split(".")[0])] = p
     return params
 
-def get_random_neurons(n_neurons, save_path="model/params/20_20_5/", threshold=0.7):
+def get_random_neurons(n_neurons, save_path="model/params/20_20_0/", threshold=0.7):
     params = get_params(save_path)
     cell_ids = []
 
@@ -29,7 +29,7 @@ def get_random_neurons(n_neurons, save_path="model/params/20_20_5/", threshold=0
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, save_path="model/params/20_20_5/", threshold=0.7, freeze_g=True):
+def get_neuron_layer(n_neurons, save_path="model/params/20_20_0/", threshold=0.7, freeze_g=True):
     neurons = get_random_neurons(n_neurons, save_path=save_path, threshold=threshold)[0]
     return BatchEKFR(neurons, freeze_g=freeze_g)
 

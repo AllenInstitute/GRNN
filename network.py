@@ -65,9 +65,6 @@ class Network(torch.nn.Module):
         self.hidden_neurons.reset(batch_size)
         self.xh = torch.zeros(batch_size, self.hidden_dim).to(self.device)
         
-    def reg(self):
-        return self.hidden_neurons.smoothness_reg() if self.neuron_type == "gfr" else 0
-        
     def zero_input(self, batch_size):
         return torch.zeros(batch_size, self.in_dim).to(self.device)
     

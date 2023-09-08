@@ -103,7 +103,7 @@ def fit_activation(
         losses.append(total_loss.item())
     return losses
 
-def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", C=1, device=None):        
+def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", device=None):        
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
@@ -128,7 +128,6 @@ def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", C=1, dev
                 pred_y = model(model.zero_input(x.shape[0]))
                 loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32).to(device))
             loss /= 5
-            loss += C * model.reg()
 
             optimizer.zero_grad()
             loss.backward(retain_graph=True)

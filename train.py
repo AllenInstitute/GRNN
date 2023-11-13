@@ -123,11 +123,8 @@ def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", device=N
                 else:
                     model(x[:, i, :])
                 
-            loss = 0
-            for _ in range(5):
-                pred_y = model(model.zero_input(x.shape[0]))
-                loss += criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32).to(device))
-            loss /= 5
+            pred_y = model(model.zero_input(x.shape[0]))
+            loss = criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32).to(device))
 
             optimizer.zero_grad()
             loss.backward(retain_graph=True)

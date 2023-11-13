@@ -27,7 +27,7 @@ class BatchEKFR(torch.nn.Module):
     # currents shape [B, n_models]
     def forward(self, currents):
         x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
-        y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
+        y = torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
         self.v =  torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
         self.fs = self.g(torch.mean(self.v, dim=2))
         return self.fs # shape [B, n_models]
@@ -99,6 +99,18 @@ class ExponentialKernelFiringRateModel(torch.nn.Module):
     
     def reg(self, p=1):
         return self.a.norm(p=p) + self.b.norm(p=p)
+
+    @classmethod
+    def default(cls, freeze_g=True, device=None):
+        g = PolynomialActivation.default()
+        ds = torch.tensor([1.0000, 0.6321, 0.3935, 0.1813, 0.0952, 0.0488])
+        a = torch.zeros(ds.shape[0])
+        a[0] = ds.shape[0]
+        b = torch.zeros(ds.shape[0])
+        model = cls(g, ds, 1, freeze_g=freeze_g, device=device)
+        model.a = torch.nn.Parameter(a.unsqueeze(dim=0))
+        model.b = torch.nn.Parameter(b.unsqueeze(dim=0))
+        return model
 
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):
@@ -233,6 +245,18 @@ class PolynomialActivation(torch.nn.Module):
         g = cls(degree, max_current, max_firing_rate, bin_size)
         g.poly_coeff = poly_coeff
         g.b = torch.nn.Parameter(params["b"])
+        return g
+    
+    @classmethod
+    def default(cls):
+        poly_coeff = torch.nn.Parameter(torch.tensor([0.0, 1.0]))
+        degree = 1
+        max_current = 1
+        max_firing_rate = 1
+        bin_size = 1
+        g = cls(degree, max_current, max_firing_rate, bin_size)
+        g.poly_coeff = poly_coeff
+        g.b = torch.nn.Parameter(torch.tensor(0.0))
         return g
 
     def get_params(self):

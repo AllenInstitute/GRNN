@@ -29,8 +29,8 @@ def get_random_neurons(n_neurons, save_path="model/params/20_20_0/", threshold=0
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, save_path="model/params/20_20_0/", threshold=0.7, freeze_g=True):
-    neurons = get_random_neurons(n_neurons, save_path=save_path, threshold=threshold)[0]
+def get_neuron_layer(n_neurons, freeze_g=True):
+    neurons = [ExponentialKernelFiringRateModel.default() for _ in range(n_neurons)]
     return BatchEKFR(neurons, freeze_g=freeze_g)
 
 class Network(torch.nn.Module):
@@ -51,8 +51,8 @@ class Network(torch.nn.Module):
         self.device = device
         
         self.fc1 = torch.nn.Linear(in_dim, hidden_dim)
-        with torch.no_grad():
-            self.fc1.weight.normal_(1.5, 3)
+        #with torch.no_grad():
+        #    self.fc1.weight.normal_(1.5, 3)
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
@@ -70,8 +70,8 @@ class Network(torch.nn.Module):
     
     # x: [batch_size, in_dim]
     def forward(self, x):
-        x_in = torch.einsum("ij,j->ij", self.fc1(x), self.hidden_neurons.g.max_current)
-        x_rec = self.fc2(self.xh)
+        x_in = torch.einsum("ij,j->ij", self.fc1(x), self.hidden_neurons.g.max_current) / self.in_dim
+        x_rec = self.fc2(self.xh) / self.hidden_dim
         self.xh = self.hidden_neurons(x_in + x_rec)
         out = self.fc3(self.xh)
         return out

@@ -35,11 +35,9 @@ def accuracy(model, data_loader, variant="p", device=None):
             for i in range(x.shape[1]):
                 model(x[:, i, :])
 
-            total_pred = torch.zeros(x.shape[0], 10).to(device)
-            for _ in range(5):
-                pred_y = model(model.zero_input(x.shape[0]))
-                total_pred += F.softmax(pred_y, dim=1) # add softmax
-            correct += torch.sum(torch.argmax(total_pred, dim=1) == label)
+            pred_y = model(model.zero_input(x.shape[0]))
+            pred = F.softmax(pred_y, dim=1) # add softmax
+            correct += torch.sum(torch.argmax(pred, dim=1) == label)
             total += x.shape[0]
         acc = correct / total
     return acc.item()

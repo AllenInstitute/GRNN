@@ -116,18 +116,16 @@ def train_network(model, train_loader, epochs=30, lr=1e-3, variant="p", device=N
             # sequentially send input into network
             model.reset(x.shape[0])
             for i in range(x.shape[1]):
-                r = model.hidden_dim / 16
-                if variant == "p" and i < int(x.shape[1] * 16 / (2*r ** 2)):
-                    with torch.no_grad():
-                        model(x[:, i, :])
-                else:
-                    model(x[:, i, :])
+                #r = model.hidden_dim / 16
+                #if variant == "p" and i < int(x.shape[1] * 16 / (2*r ** 2)):
+                model(x[:, i, :])
                 
             pred_y = model(model.zero_input(x.shape[0]))
             loss = criterion(pred_y, F.one_hot(label, num_classes=10).to(torch.float32).to(device))
-
+            print(loss)
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
             optimizer.step()
             total_loss += loss
             

@@ -41,3 +41,27 @@ def accuracy(model, data_loader, variant="p", device=None):
             total += x.shape[0]
         acc = correct / total
     return acc.item()
+
+def accuracy_with_noise(model, data_loader, eps, variant="p", device=None):
+    with torch.no_grad():
+        correct, total = 0, 0
+        for x, label in data_loader:
+            x = reshape_image(x, variant=variant).to(device)
+            label = label.to(device)
+
+            # add noise
+            z = torch.randn(x.shape)
+            z = z / z.norm(dim=(1,2)).reshape(z.shape[0], 1, 1)
+            x = x + eps * z
+
+            # sequentially send input into network
+            model.reset(x.shape[0])
+            for i in range(x.shape[1]):
+                model(x[:, i, :])
+
+            pred_y = model(model.zero_input(x.shape[0]))
+            pred = F.softmax(pred_y, dim=1) # add softmax
+            correct += torch.sum(torch.argmax(pred, dim=1) == label)
+            total += x.shape[0]
+        acc = correct / total
+    return acc.item()

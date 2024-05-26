@@ -2,13 +2,13 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-# assume ds the same for all models, otherwise composition becomes quite complicated
 class BatchGFR(torch.nn.Module):
     def __init__(self, models, freeze_g=True, device=None):
         super().__init__()
         self.device = device
         self.n_models = len(models)
         self.g = BatchPolynomialActivation([model.g for model in models])
+        self.bin_size = [model.bin_size for model in models]
         
         self.ds = torch.nn.Parameter(models[0].ds.detach().cpu(), requires_grad=False)
         self.n_hidden = len(self.ds)
@@ -27,7 +27,7 @@ class BatchGFR(torch.nn.Module):
     def forward(self, currents):
         x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
         y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
-        self.v =  torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
+        self.v = torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
         self.fs = self.g(torch.mean(self.v, dim=2))
         return self.fs # shape [B, n_models]
     
@@ -38,29 +38,19 @@ class BatchGFR(torch.nn.Module):
     def unfreeze_parameters(self): # problematic
         for _, p in self.named_parameters():
             p.requires_grad = True
-            
-    def get_params(self):
-        return {
-            "a": self.a.detach().cpu(),
-            "b": self.b.detach().cpu(),
-            "g": self.g.get_params(),
-            "ds": self.ds.detach().cpu()
-        }
-    
-    def kernel(self, x, var="a"):
-        a = self.a if var == "a" else self.b
-        return torch.einsum("ij,j->i", a, torch.pow(1 - self.ds, x))
     
 class GFR(torch.nn.Module):
     def __init__(
         self, 
         g, # activation function
         ds,
+        bin_size,
         freeze_g = True,
         device = None
     ):
         super().__init__()
         self.g = g
+        self.bin_size = bin_size
         self.device = device
         
         self.ds = torch.nn.Parameter(ds.clone().detach(), requires_grad=False)
@@ -69,7 +59,6 @@ class GFR(torch.nn.Module):
         a = torch.zeros(self.n)
         a[0] = self.n
         b = torch.zeros(self.n)
-
         self.a = torch.nn.Parameter(a.reshape(1, self.n))
         self.b = torch.nn.Parameter(b.reshape(1, self.n))
         
@@ -109,7 +98,7 @@ class GFR(torch.nn.Module):
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):
         g = PolynomialActivation.from_params(params["g"])
-        model = cls(g, params["ds"], freeze_g=freeze_g, device=device)
+        model = cls(g, params["ds"], params["bin_size"], freeze_g=freeze_g, device=device)
         model.a = torch.nn.Parameter(params["a"])
         model.b = torch.nn.Parameter(params["b"])
         return model
@@ -119,7 +108,8 @@ class GFR(torch.nn.Module):
             "a": self.a.detach().cpu(),
             "b": self.b.detach().cpu(),
             "g": self.g.get_params(),
-            "ds": self.ds.detach().cpu()
+            "ds": self.ds.detach().cpu(),
+            "bin_size": self.bin_size
         }
     
     def freeze_parameters(self):
@@ -129,10 +119,6 @@ class GFR(torch.nn.Module):
     def unfreeze_parameters(self): # problematic
         for _, p in self.named_parameters():
             p.requires_grad = True
-            
-    def kernel(self, x, var="a"):
-        a = self.a if var == "a" else self.b
-        return torch.sum(a * torch.pow(1-self.ds, x))
     
     # Is: shape [seq_length]
     def predict(self, Is):
@@ -154,6 +140,7 @@ class BatchPolynomialActivation(torch.nn.Module):
         self.degree = max([g.degree for g in gs])
         self.max_current = torch.nn.Parameter(torch.tensor([g.max_current for g in gs]), requires_grad=False)
         self.max_firing_rate = torch.nn.Parameter(torch.tensor([g.max_firing_rate for g in gs]), requires_grad=False)
+        self.bin_size = [g.bin_size for g in gs]
         self.p = torch.nn.Parameter(torch.tensor([d for d in range(self.degree + 1)]), requires_grad=False)
         self.b = torch.nn.Parameter(torch.tensor([g.b.item() for g in gs]))
         
@@ -182,15 +169,17 @@ class BatchPolynomialActivation(torch.nn.Module):
             "max_current": self.max_current.detach().cpu(),
             "max_firing_rate": self.max_firing_rate.detach().cpu(),
             "poly_coeff": self.poly_coeff.detach().cpu(),
-            "b": self.b.detach().cpu()
+            "b": self.b.detach().cpu(),
+            "bin_size": self.bin_size
         }
 
 class PolynomialActivation(torch.nn.Module):
-    def __init__(self, degree, max_current, max_firing_rate):
+    def __init__(self, degree, max_current, max_firing_rate, bin_size):
         super().__init__()
         self.degree = degree
         self.max_current = torch.nn.Parameter(torch.tensor([max_current]), requires_grad=False)
         self.max_firing_rate = torch.nn.Parameter(torch.tensor([max_firing_rate]), requires_grad=False)
+        self.bin_size = bin_size
         
         self.p = torch.nn.Parameter(torch.tensor([d for d in range(degree+1)]), requires_grad=False)
         self.poly_coeff = torch.nn.Parameter(torch.randn(1, self.degree + 1))
@@ -203,35 +192,14 @@ class PolynomialActivation(torch.nn.Module):
         tan = self.max_firing_rate * F.tanh(poly) # ceil is the max firing rate
         return F.relu(tan).to(torch.float32) # shape [B, n]
     
-    # initialize based on linear approximation of data
-    @classmethod
-    def from_data(cls, degree, max_current, max_firing_rate, Is, fs):
-        g = cls(degree, max_current, max_firing_rate)
-        
-        x1, x2, y1, y2 = tuple([torch.tensor(0.0)] * 4)
-        xs, ys = map(list, zip(*sorted(zip(Is.cpu(), fs.cpu()), key=lambda x: x[0])))
-        i = np.argmax(ys)
-        x2, y2 = xs[i], ys[i]
-        for i in range(0, len(ys)):
-            if ys[i] > 0.01:
-                x1, y1 = (xs[i-1], ys[i-1]) if i - 1 > 0 else (xs[i], ys[i])
-                break
-                
-        g.b = torch.nn.Parameter(x1.clone().reshape(1))
-        poly_coeff = torch.randn(degree + 1) * 1e-1
-        poly_coeff[1] = np.abs((y2 - y1) / (x2 - x1) * max_current)
-        poly_coeff = poly_coeff.reshape(1, -1)
-        g.poly_coeff = torch.nn.Parameter(poly_coeff)
-        
-        return g
-    
     @classmethod
     def from_params(cls, params):
         poly_coeff = torch.nn.Parameter(params["poly_coeff"])
         degree = poly_coeff.shape[1] - 1
         max_current = params["max_current"]
         max_firing_rate = params["max_firing_rate"]
-        g = cls(degree, max_current, max_firing_rate)
+        bin_size = params["bin_size"]
+        g = cls(degree, max_current, max_firing_rate, bin_size)
         g.poly_coeff = poly_coeff
         g.b = torch.nn.Parameter(params["b"])
         return g
@@ -242,7 +210,8 @@ class PolynomialActivation(torch.nn.Module):
         degree = 1
         max_current = 1
         max_firing_rate = 1
-        g = cls(degree, max_current, max_firing_rate)
+        bin_size = 1
+        g = cls(degree, max_current, max_firing_rate, bin_size)
         g.poly_coeff = poly_coeff
         g.b = torch.nn.Parameter(torch.tensor(0.0))
         return g
@@ -252,7 +221,8 @@ class PolynomialActivation(torch.nn.Module):
             "max_current": self.max_current,
             "max_firing_rate": self.max_firing_rate,
             "poly_coeff": self.poly_coeff.detach().cpu(),
-            "b": self.b.detach().cpu()
+            "b": self.b.detach().cpu(),
+            "bin_size": self.bin_size
         }
     
     def freeze_parameters(self):

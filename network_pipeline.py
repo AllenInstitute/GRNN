@@ -2,7 +2,7 @@ import torch
 import argparse
 import numpy as np
 
-from network import Network
+from network import Network, RNN
 from data import get_MNIST_data_loaders
 from train import train_network
 from evaluate import accuracy
@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("lr", type=float, help="Learing rate")
 parser.add_argument("epochs", type=int, help="Number of training epochs")
 parser.add_argument("batch_size", type=int, help="Batch size")
+parser.add_argument("model_type", type=str, help="gfr/rnn/lstm")
 parser.add_argument("n_nodes", type=int, help="Number of recurrent nodes")
 parser.add_argument("variant", type=str, help="MNIST variant (p or l)")
 parser.add_argument("freeze_neurons", type=str, help="Freeze neuron weights")
@@ -20,6 +21,7 @@ args = parser.parse_args()
 lr = args.lr
 epochs = args.epochs
 batch_size = args.batch_size
+model_type = args.model_type
 hidden_dim = args.n_nodes
 variant = args.variant
 freeze_neurons = eval(args.freeze_neurons)
@@ -37,7 +39,7 @@ def load_network(fname):
     model.load_state_dict(state["model_state_dict"])
     return model
 
-def permuted_network(fname, variant):
+def permuted_network(fname, variant, device=None):
     model = load_network(fname)
 
     in_dim = model.in_dim
@@ -49,7 +51,8 @@ def permuted_network(fname, variant):
         hidden_dim, 
         out_dim,
         freeze_neurons=True, 
-        freeze_g=True
+        freeze_g=True,
+        device=device
     )
 
     idxs = (np.random.rand(256) * 256).astype(int)
@@ -64,7 +67,7 @@ def permuted_network(fname, variant):
     return new_model
 
 if __name__ == "__main__":
-    print(f"{lr=}\n{epochs=}\n{batch_size=}\n{hidden_dim=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
+    print(f"{lr=}\n{epochs=}\n{batch_size=}\n{model_type=}\n{hidden_dim=}\n{variant=}\n{freeze_neurons=}\n{freeze_activations=}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"{device=}")
@@ -73,35 +76,37 @@ if __name__ == "__main__":
     out_dim = 10
     
     train_loader, test_loader = get_MNIST_data_loaders(batch_size, variant=variant)
-
-    if freeze_neurons:
-        model = permuted_network(f"model/network_params/{variant}_{hidden_dim}_False_True.pt", variant)
+    
+    model = None
+    
+    if model_type == "gfr":
+        if freeze_neurons:
+            model = permuted_network(f"model/network_params/{variant}_{hidden_dim}_False_True.pt", variant, device).to(device)
+        else:
+            model = Network(
+                in_dim, 
+                hidden_dim, 
+                out_dim,
+                freeze_neurons=freeze_neurons, 
+                freeze_g=freeze_activations
+            ).to(device)
     else:
-        model = Network(
-            in_dim, 
-            hidden_dim, 
-            out_dim, 
-            freeze_neurons=freeze_neurons, 
-            freeze_g=freeze_activations,
-            device=device
-        ).to(device)
+        model = RNN(in_dim, hidden_dim, out_dim, lstm=(model_type == "lstm"))
 
-    train_network(
+    losses = train_network(
         model, 
         train_loader, 
         epochs=epochs, 
-        lr=lr, 
+        lr=lr,
         variant=variant,
-        C=0,
-        device=device
     )
 
     train_acc = accuracy(model, train_loader, variant=variant, device=device)
     test_acc = accuracy(model, test_loader, variant=variant, device=device)
     print(f"Train accuracy: {train_acc} | Test accuracy: {test_acc}")
-    
-    save_path = f"model/network_params/{variant}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
-    
+
+    save_path = f"model/network_params/{model_type}_{variant}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
+
     torch.save(
         {
             "model_state_dict": model.to(torch.device("cpu")).state_dict(),
@@ -112,7 +117,8 @@ if __name__ == "__main__":
             "hidden_dim": hidden_dim,
             "variant": variant,
             "freeze_neurons": freeze_neurons,
-            "freeze_activations": freeze_activations
+            "freeze_activations": freeze_activations,
+            "losses": losses
         },
         save_path
     )

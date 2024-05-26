@@ -3,7 +3,7 @@ import pickle
 import os
 import random
 
-from model import BatchEKFR, ExponentialKernelFiringRateModel
+from model import BatchGFR, GFR
 
 def get_params(save_path="model/params/20_20_0/"):
     params = {}
@@ -25,13 +25,13 @@ def get_random_neurons(n_neurons, save_path="model/params/20_20_0/", threshold=0
     chosen_ids = random.sample(cell_ids, k=n_neurons)
     neurons = []
     for cell_id in chosen_ids:
-        neurons.append(ExponentialKernelFiringRateModel.from_params(params[cell_id]["params"]))
+        neurons.append(GFR.from_params(params[cell_id]["params"]))
         
     return neurons, chosen_ids
 
 def get_neuron_layer(n_neurons, freeze_g=True):
-    neurons = [ExponentialKernelFiringRateModel.default() for _ in range(n_neurons)]
-    return BatchEKFR(neurons, freeze_g=freeze_g)
+    neurons = [GFR.default() for _ in range(n_neurons)]
+    return BatchGFR(neurons, freeze_g=freeze_g)
 
 class Network(torch.nn.Module):
     def __init__(
@@ -51,8 +51,6 @@ class Network(torch.nn.Module):
         self.device = device
         
         self.fc1 = torch.nn.Linear(in_dim, hidden_dim)
-        #with torch.no_grad():
-        #    self.fc1.weight.normal_(1.5, 3)
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 

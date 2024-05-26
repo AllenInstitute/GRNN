@@ -6,10 +6,11 @@ import argparse
 import os
 import json
 
-from model import ExponentialKernelFiringRateModel, PolynomialActivation
+from model import GFR, PolynomialActivation
 from train import train_model, fit_activation
 from evaluate import explained_variance_ratio
 from data import get_data, get_train_test_data, preprocess_data
+from utils import activation_from_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument("chunk_id", type=int)
@@ -48,7 +49,7 @@ def get_activations(
     best_loss = 1e10
     
     for i in range(repeats):
-        g = PolynomialActivation.from_data(degree, max_current, max_firing_rate, bin_size, Is, fs).to(device)
+        g = activation_from_data(degree, max_current, max_firing_rate, bin_size, Is, fs).to(device)
         criterion = torch.nn.PoissonNLLLoss(log_input=False)
         optimizer = torch.optim.Adam(g.parameters(), lr=0.05)
 
@@ -90,11 +91,11 @@ def train(
             print("Loading previous save...")
             with open(f"{save_path}{cell_id}.pickle", "rb") as f:
                 params = pickle.load(f)["params"]
-            model = ExponentialKernelFiringRateModel.from_params(
+            model = GFR.from_params(
                 params, freeze_g=config["freeze_activation"], device=device
             ).to(device)
         else:
-            model = ExponentialKernelFiringRateModel(
+            model = GFR(
                 g, ds, bin_size, freeze_g=config["freeze_activation"], device=device
             ).to(device)
 

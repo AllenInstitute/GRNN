@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from config import config
+from model import PolynomialActivation
 
 def read_file(fname):
     arr = []
@@ -112,3 +113,29 @@ def reshape_image(x, variant="p"):
         return x.reshape(x.shape[0], -1, 1)
     else:
         return x.reshape(x.shape[0], 28, 28)
+    
+# returns kernel of gfr neuron
+def kernel(model, x, var="a"):
+    a = model.a if var == "a" else model.b
+    return torch.sum(a * torch.pow(1 - model.ds, x))
+
+# initialize based on linear approximation of data
+def activation_from_data(degree, max_current, max_firing_rate, bin_size, Is, fs):
+    g = PolynomialActivation(degree, max_current, max_firing_rate, bin_size)
+    
+    x1, x2, y1, y2 = tuple([torch.tensor(0.0)] * 4)
+    xs, ys = map(list, zip(*sorted(zip(Is.cpu(), fs.cpu()), key=lambda x: x[0])))
+    i = np.argmax(ys)
+    x2, y2 = xs[i], ys[i]
+    for i in range(0, len(ys)):
+        if ys[i] > 0.01:
+            x1, y1 = (xs[i-1], ys[i-1]) if i - 1 > 0 else (xs[i], ys[i])
+            break
+            
+    g.b = torch.nn.Parameter(x1.clone().reshape(1))
+    poly_coeff = torch.randn(degree + 1) * 1e-1
+    poly_coeff[1] = np.abs((y2 - y1) / (x2 - x1) * max_current)
+    poly_coeff = poly_coeff.reshape(1, -1)
+    g.poly_coeff = torch.nn.Parameter(poly_coeff)
+    
+    return g

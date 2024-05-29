@@ -2,7 +2,7 @@ import torch
 import argparse
 import numpy as np
 
-from network import Network, RNN
+from network import Network
 from data import get_MNIST_data_loaders
 from train import train_network
 from evaluate import accuracy
@@ -11,9 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("lr", type=float, help="Learing rate")
 parser.add_argument("epochs", type=int, help="Number of training epochs")
 parser.add_argument("batch_size", type=int, help="Batch size")
-parser.add_argument("model_type", type=str, help="gfr/rnn/lstm")
 parser.add_argument("n_nodes", type=int, help="Number of recurrent nodes")
-parser.add_argument("variant", type=str, help="MNIST variant (p or l)")
 parser.add_argument("freeze_neurons", type=str, help="Freeze neuron weights")
 parser.add_argument("freeze_activations", type=str, help="Freeze activation weights")
 args = parser.parse_args()
@@ -21,9 +19,9 @@ args = parser.parse_args()
 lr = args.lr
 epochs = args.epochs
 batch_size = args.batch_size
-model_type = args.model_type
+model_type = "gfr"
 hidden_dim = args.n_nodes
-variant = args.variant
+variant = "l"
 freeze_neurons = eval(args.freeze_neurons)
 freeze_activations = eval(args.freeze_activations)
 
@@ -91,7 +89,8 @@ if __name__ == "__main__":
                 freeze_g=freeze_activations
             ).to(device)
     else:
-        model = RNN(in_dim, hidden_dim, out_dim, lstm=(model_type == "lstm"))
+        pass
+        #model = RNN(in_dim, hidden_dim, out_dim, lstm=(model_type == "lstm"))
 
     losses = train_network(
         model, 

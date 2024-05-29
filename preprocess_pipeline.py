@@ -8,11 +8,11 @@ from data import obtain_spike_time_and_current_and_voltage, obtain_firing_rate_a
 from config import config
 
 parser = argparse.ArgumentParser()
-parser.add_argument("chunk_num", type=int, help="Chunk number")
+parser.add_argument("cell_ids", type=str, help="CSV of cell ids")
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    cell_ids = list(map(int, np.genfromtxt(f"misc/preprocess_chunks/chunk{args.chunk_num}.csv", delimiter=",")))
+    cell_ids = list(map(int, np.genfromtxt(f"{args.cell_ids}", delimiter=",")))
 
     for i, cell_id in enumerate(cell_ids):
         print(f"({i+1}/{len(cell_ids)} Cell {cell_id})")
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         else:
             print("Max firing rate exists. Skipping.")
 
-        fname = f"{config['data_path_aligned']}/processed_I_and_firing_rate_{cell_id}.pickle"
+        fname = f"{config['data_path']}/processed_I_and_firing_rate_{cell_id}.pickle"
         if not os.path.isfile(fname):
             try:
                 data = obtain_firing_rate_and_current_given_time_bin(cell_id=cell_id)

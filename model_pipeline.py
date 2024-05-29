@@ -13,7 +13,7 @@ from data import get_data, get_train_test_data, preprocess_data
 from utils import activation_from_data
 
 parser = argparse.ArgumentParser()
-parser.add_argument("chunk_id", type=int)
+parser.add_argument("cell_ids", type=str)
 parser.add_argument("bin_size", type=int)
 parser.add_argument("activation_bin_size", type=int)
 parser.add_argument("degree", type=int)
@@ -22,7 +22,7 @@ parser.add_argument("save_path", type=str)
 parser.add_argument("config_path", type=str)
 args = parser.parse_args()
 
-chunk_id = args.chunk_id
+cell_id_path = args.cell_ids
 bin_size = args.bin_size
 activation_bin_size = args.activation_bin_size
 degree = args.degree
@@ -220,10 +220,10 @@ def model_pipeline(cell_id, bin_size, activation_bin_size, degree, max_firing_ra
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    cell_ids = np.genfromtxt(f'misc/chunks/chunk{chunk_id}.csv', delimiter=',')
+    cell_ids = np.genfromtxt(f'{cell_id_path}', delimiter=',')
     cell_ids = [int(cell_ids)] if cell_ids.shape == () else list(map(int, cell_ids))
 
-    print(f"{device=}\n{chunk_id=}\n{bin_size=}\n{activation_bin_size=}\n{degree=}\n{C=}")
+    print(f"{device=}\n{bin_size=}\n{activation_bin_size=}\n{degree=}\n{C=}")
     print(config)
 
     for i, cell_id in enumerate(cell_ids):

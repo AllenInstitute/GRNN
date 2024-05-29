@@ -3,7 +3,7 @@ import torch
 import torchvision
 import numpy as np
 
-#from allensdk.core.cell_types_cache import CellTypesCache
+from allensdk.core.cell_types_cache import CellTypesCache
 
 from config import config
 
@@ -19,15 +19,10 @@ def get_MNIST_data_loaders(batch_size, variant="l"):
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
 
-def get_data(cell_id, aligned=True, patch_seq=False):
-    if patch_seq:
-        path = config["patch_seq_path"] + f"processed_I_and_firing_rate_{cell_id}.pickle"
-        with open(path, "rb") as f:
-            return pickle.load(f)
-    else:
-        path = config["data_path_aligned" if aligned else "data_path"] + f"processed_I_and_firing_rate_{cell_id}.pickle"
-        with open(path, "rb") as f:
-            return pickle.load(f)
+def get_data(cell_id):
+    path = config["data_path"] + f"processed_I_and_firing_rate_{cell_id}.pickle"
+    with open(path, "rb") as f:
+        return pickle.load(f)
     
 def get_raw_data(cell_id):
     with open(config["raw_data_path"] + f"raw_data_{cell_id}.pickle", "rb") as file:

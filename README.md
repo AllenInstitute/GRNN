@@ -1,4 +1,13 @@
 # Generalized Firing Rate Neurons
+## Download data
+To download the Allen Institute Electrophysiology data, run
+```
+python download_data.py
+```
+Cell ids as well as firing data corresponding to all cells in the dataset will be loaded and saved.
+
+WARNING: this process will take a while.
+
 ## Preprocessing data
 To preprocess the data, run
 ```

@@ -1,21 +1,14 @@
 # Generalized Firing Rate Neurons
-## Download data
-To download the Allen Institute Electrophysiology data, run
-```
-python download_data.py
-```
-Cell ids as well as firing data corresponding to all cells in the dataset will be loaded and saved.
-
-WARNING: this process will take a while.
-
 ## Preprocessing data
-To preprocess the data, run
+To download and preprocess the data, run
 ```
-python preprocess_pipeline.py [cell_ids]
+python preprocess_pipeline.py --cell_ids [cell_ids]
 ```
-where `[cell_ids]` is the path to a CSV file containing the cell ids of all the cells you want to preprocess.
+where `[cell_ids]` is the path to a CSV file containing the cell ids of all the cells you want to preprocess. If not specified, all cell ids available will be used. A corresponding CSV with all cell ids will be saved in `data/cell_ids.csv`.
 
 The preprocessed data will be saved as a pickle file in `data/processed_data/` as `processed_I_and_firing_rate_{cell_id}.pickle` for each cell id in the specified CSV file.
+
+WARNING: this process will take a while.
 
 ## Training GFR neurons
 To train the model, run

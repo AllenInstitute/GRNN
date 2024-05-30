@@ -11,6 +11,7 @@ from train import train_model, fit_activation
 from evaluate import explained_variance_ratio
 from data import get_data, get_train_test_data, preprocess_data
 from utils import activation_from_data
+from config import config as file_config
 
 parser = argparse.ArgumentParser()
 parser.add_argument("cell_ids", type=str)
@@ -28,6 +29,8 @@ activation_bin_size = args.activation_bin_size
 degree = args.degree
 C = args.C
 save_path = args.save_path
+if save_path[-1] != '/':
+    save_path += '/'
 
 with open(args.config_path, "r") as f:
     config = json.load(f)
@@ -130,8 +133,8 @@ def train(
 
 def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device=None, g=None):
     print("Loading data for activation")
-    aligned_data = get_data(cell_id, aligned=True)
-    Is, fs = preprocess_data(aligned_data, activation_bin_size)
+    data = get_data(cell_id)
+    Is, fs = preprocess_data(data, activation_bin_size)
     Is, fs = torch.tensor(Is).to(device), torch.tensor(fs).to(device) # shape [seq_length]
     
     if g is None:
@@ -163,7 +166,7 @@ def fit_model(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, d
         print(f"Using timescales: {taus}")
         print(f"Corresponding decay rates: {ds}")
 
-        data = get_data(cell_id, aligned=False)
+        data = get_data(cell_id)
         Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims = get_train_test_data(data, bin_size, device=device)
         Is_tr, fs_tr, stims = sklearn.utils.shuffle(Is_tr, fs_tr, stims) # list of Tensors, each with shape [B, seq_len]
         
@@ -229,7 +232,7 @@ if __name__ == "__main__":
     for i, cell_id in enumerate(cell_ids):
         print(f"({i+1}/{len(cell_ids)}) Cell {cell_id}")
         try:
-            with open(f"model/max_firing_rates/{cell_id}.pickle", "rb") as f:
+            with open(f"{file_config['mfr_path']}{cell_id}.pickle", "rb") as f:
                 max_firing_rate = pickle.load(f)
             model_pipeline(cell_id, bin_size, activation_bin_size, degree, max_firing_rate, device)
         except Exception as e:

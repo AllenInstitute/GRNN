@@ -1,0 +1,12 @@
+{
+    "config_name": "test",
+    "activation_epochs": 10,
+    "activation_repeats": 1,
+    "freeze_activation": true,
+    "eps": 1e-8,
+    "hparams": [
+        {"lr": 1e-2, "epochs": 10}
+    ],
+    "finetune": false,
+    "retrain_model": true
+}

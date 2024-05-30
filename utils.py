@@ -1,4 +1,5 @@
 import torch
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -20,76 +21,6 @@ def get_max_firing_rate(data):
     diffs = np.concatenate([np.diff(d["spike_times"]) for d in data])
     return np.max(1 / diffs) / 1000 # return in ms^-1
 
-def plot_predictions(model, Is, fs, cell_id, bin_size, evr=None, save=False, fname=None):
-    pred_fs, vs = model.predict(Is)
-    ts = np.arange(len(Is)) * bin_size / 1000
-    
-    if vs is None:
-        fig, axs = plt.subplots(2)
-        if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
-        else:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
-            
-        axs[0].plot(ts, fs, label="Actual")
-        axs[0].plot(ts, pred_fs, label="Predicted")
-        axs[1].plot(ts, Is)
-        axs[0].legend()
-        axs[0].set_ylabel("firing rate ($ms^{-1}$)")
-        axs[1].set_ylabel("current ($pA$)")
-        axs[1].set_xlabel("time ($s$)")
-    else:
-        fig, axs = plt.subplots(3)
-        if evr is not None:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}, evr={evr[0]:.3f}")
-        else:
-            fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
-            
-        axs[0].plot(ts, fs, label="Actual")
-        axs[0].plot(ts, pred_fs, label="Predicted")
-        axs[1].plot(ts, vs)
-        axs[2].plot(ts, Is)
-        axs[0].legend()
-        axs[0].set_ylabel("firing rate ($ms^{-1}$)")
-        axs[1].set_ylabel("v")
-        axs[2].set_ylabel("current ($pA$)")
-        axs[2].set_xlabel("time ($s$)")
-
-    if save:
-        plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
-        plt.close()
-
-def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
-    fig = plt.figure(constrained_layout=True)
-    subfigs = fig.subfigures(1, 2)
-    fig.suptitle(f"cell_id={cell_id}, bin_size={bin_size}")
-    xs = torch.linspace(0, xlim, 100)
-    cs, ds = [], []
-    with torch.no_grad():
-        for x in xs:
-            cs.append(model.kernel(x, var="a"))
-            ds.append(model.kernel(x, var="b"))
-    
-    axs0 = subfigs[0].subplots(2)
-    axs0[0].plot(xs,cs)
-    axs0[1].plot(xs,ds)
-    axs0[0].set_ylabel("$k_a(x)$")
-    axs0[1].set_ylabel("$k_b(x)$")
-    axs0[1].set_xlabel("$x$")
-    
-    axs1 = subfigs[1].subplots(2)
-    axs1[0].bar(list(range(model.a.shape[1])), model.a.detach().reshape(-1))
-    axs1[1].bar(list(range(model.b.shape[1])), model.b.detach().reshape(-1))
-    axs1[0].set_ylabel("$a_i$")
-    axs1[1].set_ylabel("$b_i$")
-    axs1[1].set_xlabel("$i$")
-    
-    fig.set_size_inches(8, 5, forward=True)
-
-    if save:
-        plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
-        plt.close()
-        
 def get_activation_plot(actv, start=-100, end=270):
     currents = torch.linspace(start, end, steps=300).reshape(-1, 1)
     with torch.no_grad():
@@ -97,13 +28,95 @@ def get_activation_plot(actv, start=-100, end=270):
     return currents.reshape(-1), fs.reshape(-1)
 
 def plot_activation(Is, fs, actv):
-    plt.figure()
-    plt.title(f"bin_size={actv.bin_size}, degree={actv.degree}")
+    plt.figure(figsize=(8, 4.5), dpi=1000)
     plt.scatter(Is, fs)
-    xs1, ys1 = get_activation_plot(actv, end=int(actv.max_current)+200)
-    plt.plot(xs1, ys1)
-    plt.xlabel("current (pA)")
-    plt.ylabel("firing rate ($ms^{-1}$)")
+    xs1, ys1 = get_activation_plot(actv, end=int(actv.max_current)+300)
+    plt.plot(xs1, ys1, linewidth=2)
+    plt.xlabel("$I$ $(pA)$")
+    plt.ylabel("$g(I)$ $(ms^{-1})$")
+
+def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
+    fig = plt.figure(constrained_layout=True, figsize=(8, 4.5), dpi=1000)
+    subfigs = fig.subfigures(1, 2)
+    xs = torch.linspace(0, xlim, 100)
+    cs, ds = [], []
+    with torch.no_grad():
+        for x in xs:
+            cs.append(kernel(model, x, var="a"))
+            ds.append(kernel(model, x, var="b"))
+    
+    xs = xs * bin_size / 1000
+    
+    axs0 = subfigs[0].subplots(2)
+    axs0[0].plot(xs,cs, linewidth=2)
+    axs0[1].plot(xs,ds, linewidth=2)
+    axs0[0].set_ylabel("$k_I(t)$")
+    axs0[1].set_ylabel("$k_f(t)$")
+    axs0[0].set_ylim([0, 3.4])
+    axs0[1].set_ylim([-3.4, 0])
+    axs0[1].set_xlabel("$t$ $(s)$")
+    
+    axs1 = subfigs[1].subplots(2)
+    taus = np.array([10, 20, 50, 100, 200, 500, 1000, 2000])
+    ks = [f"{i:.2f}" for i in taus]
+    axs1[0].bar(ks, model.a.detach().reshape(-1))
+    axs1[1].bar(ks, model.b.detach().reshape(-1))
+    axs1[0].set_ylabel("$\\alpha_i$")
+    axs1[1].set_ylabel("$\\beta_i$")
+    axs1[1].set_xlabel("$\\tau_i$ (ms)")
+
+    if save:
+        plt.savefig(config["fig_save_path"] + f"{cell_id}/bin_size_{bin_size}/{fname}.png")
+        plt.close()
+
+def plot_predictions(model, Is, fs, bin_size, xlim=None):
+    pred_fs, vs = model.predict(Is)
+    pred_fs = torch.cat([torch.zeros(1), pred_fs])
+    vs = torch.cat([torch.zeros(1, vs.shape[1]), vs])
+    Is = torch.cat([torch.zeros(1), Is])
+    fs = torch.cat([torch.zeros(1), fs])
+    ts = np.arange(Is.shape[0]) * bin_size / 1000
+    
+
+    fig, axs = plt.subplots(2, figsize=(6, 2.5), dpi=100)
+    
+    axs[1].plot(ts, fs, label="Actual", linewidth=1)
+    axs[1].plot(ts, pred_fs, label="Predicted", linewidth=1)
+    axs[0].plot(ts, Is, linewidth=1)
+    axs[1].legend()
+    axs[1].set_ylabel("$f_t$ $(ms^{-1})$")
+    axs[0].set_ylabel("$I_t$ $(pA)$")
+    if xlim is not None:
+        axs[0].set_xlim(xlim)
+        axs[1].set_xlim(xlim)
+    axs[0].set_ylim([-10, 230])
+    axs[1].set_ylim([-0.003, 0.06])
+    axs[0].xaxis.set_ticklabels([])
+    axs[1].set_xlabel("$t$ $(s)$")
+    fig.tight_layout()
+
+def get_dataset(params, threshold=0.6):
+    with open("model/labels.pickle", "rb") as f:
+        labels = pickle.load(f)
+    
+    chosen_ids = filter(lambda x: params[x]["evr2"] > threshold, params.keys())
+    
+    dataset = {}
+    for cell_id in chosen_ids:
+        y = labels[cell_id]
+        p = params[cell_id]["params"]
+        
+        a = p["a"].reshape(-1)
+        b = p["b"].reshape(-1)
+        pc = p["g"]["poly_coeff"].reshape(-1)
+        gb = p["g"]["b"].reshape(-1)
+        mc = p["g"]["max_current"].reshape(-1)
+        mfr = p["g"]["max_firing_rate"].reshape(-1)
+        x = torch.cat([a, b, pc, gb, mc, mfr])
+        
+        dataset[cell_id] = (x, y, params[cell_id]["evr2"])
+        
+    return dataset
 
 # x: shape [batch_size, 28, 28]
 # returns shape [batch_size, seq_length, in_dim]

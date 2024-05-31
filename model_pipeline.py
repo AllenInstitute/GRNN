@@ -15,12 +15,12 @@ from config import config as file_config
 
 parser = argparse.ArgumentParser()
 parser.add_argument("cell_ids", type=str)
-parser.add_argument("bin_size", type=int)
-parser.add_argument("activation_bin_size", type=int)
-parser.add_argument("degree", type=int)
-parser.add_argument("C", type=float)
-parser.add_argument("save_path", type=str)
-parser.add_argument("config_path", type=str)
+parser.add_argument("--bin_size", type=int, default=20, choices=[10, 20, 50, 100])
+parser.add_argument("--activation_bin_size", type=int, default=20, choices=[10, 20, 50, 100])
+parser.add_argument("--degree", type=int, default=1)
+parser.add_argument("--C", type=float, default=0)
+parser.add_argument("--save_path", type=str, default="model/params/")
+parser.add_argument("--config_path", type=str, default="configs/default.json")
 args = parser.parse_args()
 
 cell_id_path = args.cell_ids

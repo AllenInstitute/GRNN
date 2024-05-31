@@ -13,16 +13,24 @@ WARNING: this process will take a while.
 ## Training GFR neurons
 To train the model, run
 ```
-python model_pipeline.py [cell_ids] [bin_size] [activation_bin_size] [degree] [C] [save_path] [config_path]
+python model_pipeline.py [cell_ids] --bin_size [bin_size] --activation_bin_size [activation_bin_size] --degree [degree] --C [C] --save_path [save_path] --config_path [config_path]
 ```
 where
 - `[cell_ids]`: path to a CSV file containing the cell ids of all the cells you want to train models for.
 - `[bin_size]`: time bin size used for discretizing the spike data for training the GFR model (not including activation function).
+    - Default: 20
+    - Allowed values: 10, 20, 50, 100
 - `[activation_bin_size]`: time bin size used for discretizing the spike data for training the activation function.
+    - Default: 20
+    - Allowed values: 10, 20, 50, 100
 - `[degree]`: degree of the polynomial in the activation function.
+    - Default: 1
 - `[C]`: constant for L1 regularization on the GFR model.
+    - Default: 0
 - `[save_path]`: path to save folder for models.
+    - Default: `model/params/`
 - `[config_path]`: path to config file specifying training parameters (see `configs/default.json` for an example).
+    - Default: `configs/default.json`
 
 ## Training a network of GFR neurons for L-MNIST
 To train the network, run

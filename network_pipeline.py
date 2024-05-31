@@ -1,6 +1,7 @@
 import torch
 import argparse
 import numpy as np
+import os
 
 from network import Network
 from data import get_MNIST_data_loaders
@@ -105,6 +106,9 @@ if __name__ == "__main__":
     print(f"Train accuracy: {train_acc} | Test accuracy: {test_acc}")
 
     save_path = f"model/network_params/{model_type}_{variant}_{hidden_dim}_{freeze_neurons}_{freeze_activations}.pt"
+
+    if not os.path.exists("model/network_params/"):
+        os.makedirs("model/network_params/")
 
     torch.save(
         {

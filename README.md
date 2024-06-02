@@ -15,6 +15,8 @@ The table below lists the number of cells satisfying the above criteria:
 |       50      |            100           | 1524    |
 |      100      |            100           | 1402    |
 
+One can view more information for a given cell id in the [Allen Brain Atlas](https://celltypes.brain-map.org/experiment/electrophysiology/474626527).
+
 ## Loading the dataset
 To load the dataset, run
 ```
@@ -33,7 +35,7 @@ load_gfr_model(dataset, cell_id, bin_size, activation_bin_size)
 in `utils.py`.
 
 ## Reproducing Results
-## Preprocessing data
+### Preprocessing data
 To download and preprocess the data, run
 ```
 python preprocess_pipeline.py --cell_ids [cell_ids]
@@ -44,7 +46,7 @@ The preprocessed data will be saved as a pickle file in `data/processed_data/` a
 
 WARNING: this process will take a while.
 
-## Training GFR neurons
+### Training GFR neurons
 To train the model, run
 ```
 python model_pipeline.py [cell_ids] --bin_size [bin_size] --activation_bin_size [activation_bin_size] --degree [degree] --C [C] --save_path [save_path] --config_path [config_path]
@@ -66,7 +68,7 @@ where
 - `[config_path]`: path to config file specifying training parameters (see `configs/default.json` for an example).
     - Default: `configs/default.json`
 
-## Training a network of GFR neurons for L-MNIST
+### Training a network of GFR neurons for L-MNIST
 To train the network, run
 ```
 python network_pipeline.py [lr] [epochs] [batch_size][n_nodes] [freeze_neurons] [freeze_activations]

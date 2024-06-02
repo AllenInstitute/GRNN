@@ -16,7 +16,7 @@ from config import config as file_config
 parser = argparse.ArgumentParser()
 parser.add_argument("cell_ids", type=str)
 parser.add_argument("--bin_size", type=int, default=20, choices=[10, 20, 50, 100])
-parser.add_argument("--activation_bin_size", type=int, default=20, choices=[10, 20, 50, 100])
+parser.add_argument("--activation_bin_size", type=int, default=20, choices=[20, 100])
 parser.add_argument("--degree", type=int, default=1)
 parser.add_argument("--C", type=float, default=0)
 parser.add_argument("--save_path", type=str, default="model/params/")

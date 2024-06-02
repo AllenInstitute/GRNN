@@ -58,7 +58,9 @@ def plot_kernel(model, cell_id, bin_size, save=False, fname=None, xlim=10):
     
     axs1 = subfigs[1].subplots(2)
     taus = np.array([10, 20, 50, 100, 200, 500, 1000, 2000])
-    ks = [f"{i:.2f}" for i in taus]
+    taus = taus[taus >= bin_size]
+    taus = np.insert(taus, 0, 0)
+    ks = [f"{i}" for i in taus]
     axs1[0].bar(ks, model.a.detach().reshape(-1))
     axs1[1].bar(ks, model.b.detach().reshape(-1))
     axs1[0].set_ylabel("$\\alpha_i$")
@@ -152,3 +154,54 @@ def activation_from_data(degree, max_current, max_firing_rate, bin_size, Is, fs)
     g.poly_coeff = torch.nn.Parameter(poly_coeff)
     
     return g
+
+def get_df(all_params, bin_size, actv_bin_size):
+    params = all_params[(bin_size, actv_bin_size)]
+    df2 = pd.read_csv("data/metadata.csv")
+    d = {
+        "cell_id": [], 
+        "cell_type": [], 
+        "bin_size": [], 
+        "actv_bin_size": [], 
+        "val_evr": [], 
+        "test_evr": [],
+        "train_loss": [],
+        "test_loss": [],
+        "params": []
+    }
+    for cell_id in params:
+        p = params[cell_id]["params"]
+        cell_type = get_line_name(df2, cell_id)
+        val_evr = params[cell_id]["evr1"]
+        test_evr = params[cell_id]["evr2"]
+        train_loss = params[cell_id]["train_losses"][-1]
+        test_loss = params[cell_id]["test_losses"][-1]
+
+        d["cell_id"].append(cell_id)
+        d["cell_type"].append(cell_type)
+        d["bin_size"].append(bin_size)
+        d["actv_bin_size"].append(actv_bin_size)
+        d["val_evr"].append(val_evr)
+        d["test_evr"].append(test_evr)
+        d["train_loss"].append(train_loss)
+        d["test_loss"].append(test_loss)
+        d["params"].append(p)
+    return pd.DataFrame.from_dict(d)
+
+def generate_gfr_dataset():
+    with open("model/best_params.pickle", "rb") as f:
+        params = pickle.load(f)
+    dataset = {}
+    for bin_size, actv_bin_size in params:
+        df = get_df(params, bin_size, actv_bin_size)
+        df2 = df[(df['val_evr'] > 0.5) & (df['train_loss'] < 0.45)]
+        print(f"{bin_size=}, {actv_bin_size=}, # cells: {len(df2)}")
+        dataset[(bin_size, actv_bin_size)] = df2
+    return dataset
+
+def load_gfr_model(dataset, cell_id, bin_size, activation_bin_size):
+    df = dataset[(bin_size, activation_bin_size)]
+    if len(df[df["cell_id"] == cell_id]) == 0:
+        raise Exception("Cell id not found")
+    else:
+        return GFR.from_params(df[df["cell_id"] == cell_id]["params"].item())

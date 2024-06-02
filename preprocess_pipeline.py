@@ -24,7 +24,7 @@ if __name__ == "__main__":
         print("No cell ids given. Using all available cell ids by default.")
         ctc = CellTypesCache(manifest_file="cell_types/manifest.json")
         cell_ids = [x["id"] for x in ctc.get_cells()]
-        cell_ids = cell_ids[:3]
+        #cell_ids = cell_ids[:3]
         with open("data/cell_ids.csv", "w") as f:
             f.write(",".join(map(str, cell_ids)))
 

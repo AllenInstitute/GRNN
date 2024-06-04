@@ -1,4 +1,5 @@
 allensdk
 matplotlib
+scikit-learn
 torch
 torchvision

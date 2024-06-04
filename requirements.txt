@@ -1,0 +1,4 @@
+allensdk
+matplotlib
+torch
+torchvision

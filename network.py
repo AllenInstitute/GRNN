@@ -68,8 +68,8 @@ class Network(torch.nn.Module):
     
     # x: [batch_size, in_dim]
     def forward(self, x):
-        x_in = torch.einsum("ij,j->ij", self.fc1(x), self.hidden_neurons.g.max_current) / self.in_dim
-        x_rec = self.fc2(self.xh) / self.hidden_dim
+        x_in = self.fc1(x)
+        x_rec = self.fc2(self.xh)
         self.xh = self.hidden_neurons(x_in + x_rec)
         out = self.fc3(self.xh)
         return out

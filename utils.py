@@ -2,9 +2,10 @@ import torch
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from config import config
-from model import PolynomialActivation
+from model import GFR, PolynomialActivation
 
 def read_file(fname):
     arr = []
@@ -154,6 +155,9 @@ def activation_from_data(degree, max_current, max_firing_rate, bin_size, Is, fs)
     g.poly_coeff = torch.nn.Parameter(poly_coeff)
     
     return g
+
+def get_line_name(df, cell_id):
+    return df[df["specimen__id"] == cell_id]["line_name"].to_numpy()[0]
 
 def get_df(all_params, bin_size, actv_bin_size):
     params = all_params[(bin_size, actv_bin_size)]

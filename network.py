@@ -1,36 +1,29 @@
 import torch
 import pickle
-import os
 import random
+
+import utils
 
 from model import BatchGFR, GFR
 
-def get_params(save_path="model/params/20_20_0/"):
-    params = {}
-    for fname in os.listdir(save_path):
-        if fname.endswith(".pickle"):
-            with open(f"{save_path}{fname}", "rb") as f:
-                p = pickle.load(f)
-                params[int(fname.split(".")[0])] = p
-    return params
-
-def get_random_neurons(n_neurons, save_path="model/params/20_20_0/", threshold=0.7):
-    params = get_params(save_path)
-    cell_ids = []
-
-    for cell_id in params:
-        if params[cell_id]["evr2"] >= threshold:
-            cell_ids.append(cell_id)
+def get_random_neurons(n_neurons, save_path="model/gfr_dataset.pickle", bin_size=20, activation_bin_size=20):
+    with open(save_path, "rb") as f:
+        all_params = pickle.load(f)
+    df = all_params[(bin_size, activation_bin_size)]
+    cell_ids = df["cell_id"].tolist()
 
     chosen_ids = random.sample(cell_ids, k=n_neurons)
     neurons = []
     for cell_id in chosen_ids:
-        neurons.append(GFR.from_params(params[cell_id]["params"]))
+        neurons.append(utils.load_gfr_model(all_params, cell_id, bin_size, activation_bin_size))
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, freeze_g=True):
-    neurons = [GFR.default() for _ in range(n_neurons)]
+def get_neuron_layer(n_neurons, freeze_g=True, default=True):
+    if default:
+        neurons = [GFR.default() for _ in range(n_neurons)]
+    else:
+        neurons, _ = get_random_neurons(n_neurons)
     return BatchGFR(neurons, freeze_g=freeze_g)
 
 class Network(torch.nn.Module):

@@ -20,10 +20,17 @@ One can view more information for a given cell id in the [Allen Brain Atlas](htt
 ## Loading the dataset
 To load the dataset, run
 ```
-import pickle
+import json
 
-with open("model/gfr_dataset.pickle", "rb") as f:
-    dataset = pickle.load(f)
+with open("model/gfr_dataset.json", "r") as f:
+    json_dataset = json.load(f)
+```
+
+To convert the dataset into a Pandas DataFrame format, run
+```
+import utils
+
+dataset = utils.df_from_json(json_dataset)
 ```
 
 The dataset is a dictionary where keys are bin size, activation bin size pairs, and the values are dataframes. Each dataframe includes information about cell id, cre-line, validation and test explained variance ratio, train and test loss, and GFR model parameters.

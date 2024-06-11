@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import json
 
 from config import config
 from model import GFR, PolynomialActivation
@@ -164,7 +165,7 @@ def get_df(all_params, bin_size, actv_bin_size):
     df2 = pd.read_csv("data/metadata.csv")
     d = {
         "cell_id": [], 
-        "cell_type": [], 
+        "cre-line": [], 
         "bin_size": [], 
         "actv_bin_size": [], 
         "val_evr": [], 
@@ -182,7 +183,7 @@ def get_df(all_params, bin_size, actv_bin_size):
         test_loss = params[cell_id]["test_losses"][-1]
 
         d["cell_id"].append(cell_id)
-        d["cell_type"].append(cell_type)
+        d["cre-line"].append(cell_type)
         d["bin_size"].append(bin_size)
         d["actv_bin_size"].append(actv_bin_size)
         d["val_evr"].append(val_evr)
@@ -208,4 +209,64 @@ def load_gfr_model(dataset, cell_id, bin_size, activation_bin_size):
     if len(df[df["cell_id"] == cell_id]) == 0:
         raise Exception("Cell id not found")
     else:
-        return GFR.from_params(df[df["cell_id"] == cell_id]["params"].item())
+        filtered_df = df[df["cell_id"] == cell_id]["params"]
+        k = list(filtered_df.keys())[0]
+        return GFR.from_params(filtered_df[k])
+    
+def to_json(dataset):
+    a = []
+    for bin_size, activation_bin_size in dataset:
+        df = dataset[(bin_size, activation_bin_size)]
+        for i in range(len(df)):
+            x = df.iloc[i]
+            p = x["params"]
+            g = p["g"]
+            d = {
+                "cell_id": int(x["cell_id"]),
+                "cre-line": x["cre-line"],
+                "bin_size": int(x["bin_size"]),
+                "actv_bin_size": int(x["actv_bin_size"]),
+                "val_evr": float(x["val_evr"]),
+                "test_evr": float(x["test_evr"]),
+                "train_loss": float(x["train_loss"]),
+                "test_loss": float(x["test_loss"]),
+                "params": {
+                    "a": p["a"],
+                    "b": p["b"],
+                    "ds": p["ds"],
+                    "bin_size": p["bin_size"],
+                    "g": {
+                        "max_current": g["max_current"],
+                        "max_firing_rate": g["max_firing_rate"],
+                        "poly_coeff": g["poly_coeff"],
+                        "b": g["b"],
+                        "bin_size": g["bin_size"]
+                    }
+                }
+            }
+            a.append(d)
+    return a
+
+def df_from_json(json_file):
+    pairs = [(10, 20), (10, 100), (20, 20), (20, 100), (50, 100), (100, 100)]
+    def get_df(json_file, bin_size, actv_bin_size):
+        data = json_file
+
+        d = {
+            "cell_id": [], 
+            "cre-line": [], 
+            "bin_size": [], 
+            "actv_bin_size": [], 
+            "val_evr": [], 
+            "test_evr": [],
+            "train_loss": [],
+            "test_loss": [],
+            "params": []
+        }
+
+        for x in data:
+            if x["bin_size"] == bin_size and x["actv_bin_size"] == actv_bin_size:
+                for key in x:
+                    d[key].append(x[key])
+        return pd.DataFrame.from_dict(d)
+    return {(a, b): get_df(json_file, a, b) for a, b in pairs}

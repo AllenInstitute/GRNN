@@ -98,17 +98,23 @@ class GFR(torch.nn.Module):
     @classmethod
     def from_params(cls, params, freeze_g=True, device=None):
         g = PolynomialActivation.from_params(params["g"])
-        model = cls(g, params["ds"], params["bin_size"], freeze_g=freeze_g, device=device)
-        model.a = torch.nn.Parameter(params["a"])
-        model.b = torch.nn.Parameter(params["b"])
+        model = cls(
+            g, 
+            torch.tensor(params["ds"]), 
+            params["bin_size"], 
+            freeze_g=freeze_g, 
+            device=device
+        )
+        model.a = torch.nn.Parameter(torch.tensor(params["a"]))
+        model.b = torch.nn.Parameter(torch.tensor(params["b"]))
         return model
 
     def get_params(self):
         return {
-            "a": self.a.detach().cpu(),
-            "b": self.b.detach().cpu(),
+            "a": self.a.tolist(),
+            "b": self.b.tolist(),
             "g": self.g.get_params(),
-            "ds": self.ds.detach().cpu(),
+            "ds": self.ds.tolist(),
             "bin_size": self.bin_size
         }
     
@@ -166,10 +172,10 @@ class BatchPolynomialActivation(torch.nn.Module):
 
     def get_params(self):
         return {
-            "max_current": self.max_current.detach().cpu(),
-            "max_firing_rate": self.max_firing_rate.detach().cpu(),
-            "poly_coeff": self.poly_coeff.detach().cpu(),
-            "b": self.b.detach().cpu(),
+            "max_current": self.max_current.tolist(),
+            "max_firing_rate": self.max_firing_rate.tolist(),
+            "poly_coeff": self.poly_coeff.tolist(),
+            "b": self.b.tolist(),
             "bin_size": self.bin_size
         }
 
@@ -177,8 +183,8 @@ class PolynomialActivation(torch.nn.Module):
     def __init__(self, degree, max_current, max_firing_rate, bin_size):
         super().__init__()
         self.degree = degree
-        self.max_current = torch.nn.Parameter(torch.tensor([max_current]), requires_grad=False)
-        self.max_firing_rate = torch.nn.Parameter(torch.tensor([max_firing_rate]), requires_grad=False)
+        self.max_current = torch.nn.Parameter(torch.tensor(max_current).reshape(1), requires_grad=False)
+        self.max_firing_rate = torch.nn.Parameter(torch.tensor(max_firing_rate).reshape(1), requires_grad=False)
         self.bin_size = bin_size
         
         self.p = torch.nn.Parameter(torch.tensor([d for d in range(degree+1)]), requires_grad=False)
@@ -194,14 +200,14 @@ class PolynomialActivation(torch.nn.Module):
     
     @classmethod
     def from_params(cls, params):
-        poly_coeff = torch.nn.Parameter(params["poly_coeff"])
+        poly_coeff = torch.nn.Parameter(torch.tensor(params["poly_coeff"]))
         degree = poly_coeff.shape[1] - 1
         max_current = params["max_current"]
         max_firing_rate = params["max_firing_rate"]
         bin_size = params["bin_size"]
         g = cls(degree, max_current, max_firing_rate, bin_size)
         g.poly_coeff = poly_coeff
-        g.b = torch.nn.Parameter(params["b"])
+        g.b = torch.nn.Parameter(torch.tensor(params["b"]))
         return g
     
     @classmethod
@@ -218,10 +224,10 @@ class PolynomialActivation(torch.nn.Module):
 
     def get_params(self):
         return {
-            "max_current": self.max_current,
-            "max_firing_rate": self.max_firing_rate,
-            "poly_coeff": self.poly_coeff.detach().cpu(),
-            "b": self.b.detach().cpu(),
+            "max_current": self.max_current.tolist(),
+            "max_firing_rate": self.max_firing_rate.tolist(),
+            "poly_coeff": self.poly_coeff.tolist(),
+            "b": self.b.tolist(),
             "bin_size": self.bin_size
         }
     

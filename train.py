@@ -14,6 +14,118 @@ def train_model(
     epochs: int = 100,
     print_every: int = 10,
     bin_size = 20,
+    C = 0,
+    hidden_size = None,
+    model_type = 'gfr'
+):
+    if model_type == 'gfr':
+        train_losses, test_losses = _train_gfr_model(
+            model,
+            criterion,
+            optimizer,
+            Is_tr,
+            fs_tr,
+            Is_te,
+            fs_te,
+            epochs=epochs,
+            print_every=print_every,
+            bin_size=bin_size,
+            C=C
+        )
+    elif model_type == 'lstm':
+        train_losses, test_losses = _train_generic_model(
+            model,
+            criterion,
+            optimizer,
+            Is_tr,
+            fs_tr,
+            Is_te,
+            fs_te,
+            epochs=epochs,
+            print_every=print_every,
+            bin_size=bin_size,
+            hidden_size=hidden_size
+        )
+    return train_losses, test_losses
+
+def _train_generic_model(
+    model,
+    criterion,
+    optimizer,
+    Is_tr,
+    fs_tr,
+    Is_te,
+    fs_te,
+    epochs: int = 100,
+    print_every: int = 10,
+    bin_size = 20,
+    hidden_size = None
+):
+    # assume LSTM for now
+    train_losses = []
+    test_losses = []
+
+    for epoch in range(epochs):
+        total_loss = 0
+
+        n = 0
+        for Is, fs in zip(Is_tr, fs_tr):
+            batch_size = Is.shape[0]
+            loss = torch.zeros(batch_size).to(model.device)
+            h = torch.zeros(1, batch_size, 1)
+            c = torch.zeros(1, batch_size, hidden_size)
+
+            # Is has shape [B, seq_len]
+            h, c = model(Is.unsqueeze(-1), (h, c))
+            fs_pred = F.relu(h).squeeze()  # [1, B, 1] so squeeze
+            loss = criterion(fs_pred * bin_size, fs * bin_size, reduction='mean')
+            
+            optimizer.zero_grad()
+            loss.backward(retain_graph=True)
+            optimizer.step()
+
+            # don't include reg term in total loss? only PoissonNLLLoss
+            # normalize by seq length
+            total_loss += loss.item() / Is.shape[1]
+            n += 1
+
+        # normalize by number of batches
+        train_losses.append(total_loss / n)
+
+        n = 0
+        total_test_loss = 0
+        with torch.no_grad():
+            for Is, fs in zip(Is_te, fs_te):
+                batch_size = Is.shape[0]
+                loss = torch.zeros(batch_size).to(model.device)
+                model.reset(batch_size)
+                
+                # Is has shape [B, seq_len]
+                h, c = model(Is.unsqueeze(-1), (h, c))
+                fs_pred = F.relu(h).squeeze()  # [1, B, 1] so squeeze
+                loss = criterion(fs_pred * bin_size, fs * bin_size, reduction='mean')
+
+                # normalize by seq length
+                total_test_loss += loss.item() / Is.shape[1]
+                n += 1
+            test_losses.append(total_test_loss / n)
+        
+        if (epoch+1) % print_every == 0:
+            print(f"Epoch {epoch+1} | Loss: {total_loss}")
+        
+    return train_losses, test_losses
+
+def _train_gfr_model(
+    model,
+    criterion,
+    optimizer,
+    Is_tr,
+    fs_tr,
+    Is_te,
+    fs_te,
+    epochs: int = 100,
+    print_every: int = 10,
+    bin_size = 20,
     C = 0
 ):
     train_losses = []

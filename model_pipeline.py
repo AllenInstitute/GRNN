@@ -124,7 +124,8 @@ def train(
             C = C
         )
         
-        evr1 = explained_variance_ratio(model, Is_val[0], fs_val[0], bin_size)
+        fs_pred = model.predict(Is_val[0])[0].squeeze().numpy()
+        evr1 = explained_variance_ratio(fs_val[0], fs_pred, bin_size)
         
         if evr1 > best_evr1:
             best_evr1 = evr1
@@ -132,7 +133,8 @@ def train(
             best_test_losses = test_losses
             best_model = model
     
-    best_evr2 = explained_variance_ratio(best_model, Is_te[0], fs_te[0], bin_size)
+    fs_pred = model.predict(Is_te[0])[0].squeeze().numpy()
+    best_evr2 = explained_variance_ratio(fs_te[0], fs_pred, bin_size)
     
     return best_model, best_evr1, best_evr2, best_losses, best_test_losses
 

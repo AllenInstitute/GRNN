@@ -99,8 +99,8 @@ def _train_generic_model(
                 model.reset(batch_size)
                 
                 # Is has shape [B, seq_len]
-                h, c = model(Is.unsqueeze(-1))
-                fs_pred = F.relu(h).squeeze()  # [1, B, 1] so squeeze
+                out, _ = model(Is.unsqueeze(-1))
+                fs_pred = F.relu(out).squeeze()  # [B, L, 1] so squeeze
                 loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
 
                 # normalize by seq length

@@ -78,7 +78,7 @@ def _train_generic_model(
             # Is has shape [B, seq_len]
             h, c = model(Is.unsqueeze(-1), (h, c))
             fs_pred = F.relu(h).squeeze()  # [1, B, 1] so squeeze
-            loss = criterion(fs_pred * bin_size, fs * bin_size, reduction='mean')
+            loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
             
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
@@ -103,7 +103,7 @@ def _train_generic_model(
                 # Is has shape [B, seq_len]
                 h, c = model(Is.unsqueeze(-1), (h, c))
                 fs_pred = F.relu(h).squeeze()  # [1, B, 1] so squeeze
-                loss = criterion(fs_pred * bin_size, fs * bin_size, reduction='mean')
+                loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
 
                 # normalize by seq length
                 total_test_loss += loss.item() / Is.shape[1]

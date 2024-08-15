@@ -238,3 +238,16 @@ class PolynomialActivation(torch.nn.Module):
     def unfreeze_parameters(self):
         for _, p in self.named_parameters():
             p.requires_grad = True
+
+class LSTM(torch.nn.Module):
+    def __init__(self, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.lstm = torch.nn.LSTM(1, hidden_size, 1, batch_first=True)
+        self.fc = torch.nn.Linear(hidden_size, 1)
+
+    def forward(self, Is):
+        # Is has shape [B, seq_len]
+        out, _ = self.lstm(Is.unsqueeze(-1)) # [B, L, hidden_size]
+        fs_pred = F.relu(self.fc(out)).squeeze()  # [B, L, 1] so squeeze
+        return fs_pred

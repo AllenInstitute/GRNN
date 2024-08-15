@@ -74,8 +74,7 @@ def _train_generic_model(
             loss = torch.zeros(batch_size).to(model.device)
 
             # Is has shape [B, seq_len]
-            out, _ = model(Is.unsqueeze(-1))
-            fs_pred = F.relu(out).squeeze()  # [B, L, 1] so squeeze
+            fs_pred = model(Is)
             loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
             
             optimizer.zero_grad()
@@ -99,8 +98,7 @@ def _train_generic_model(
                 model.reset(batch_size)
                 
                 # Is has shape [B, seq_len]
-                out, _ = model(Is.unsqueeze(-1))
-                fs_pred = F.relu(out).squeeze()  # [B, L, 1] so squeeze
+                fs_pred = model(Is)
                 loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
 
                 # normalize by seq length

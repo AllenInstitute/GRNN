@@ -21,6 +21,8 @@ parser.add_argument("--degree", type=int, default=1)
 parser.add_argument("--C", type=float, default=0)
 parser.add_argument("--save_path", type=str, default="model/params/")
 parser.add_argument("--config_path", type=str, default="configs/default.json")
+parser.add_argument("--model_type", type=str, default="gfr")
+parser.add_argument("--hidden_size", type=int, default=5)
 args = parser.parse_args()
 
 cell_id_path = args.cell_ids
@@ -28,6 +30,9 @@ bin_size = args.bin_size
 activation_bin_size = args.activation_bin_size
 degree = args.degree
 C = args.C
+model_type = args.model_type
+hidden_size = args.hidden_size
+
 save_path = args.save_path
 if save_path[-1] != '/':
     save_path += '/'

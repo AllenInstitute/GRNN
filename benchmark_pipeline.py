@@ -5,7 +5,9 @@ import sklearn.utils
 import argparse
 import os
 import json
+import torch.nn.functional as F
 
+from model import LSTM
 from train import train_model
 from evaluate import explained_variance_ratio
 from data import get_data, get_train_test_data
@@ -32,10 +34,6 @@ if save_path[-1] != '/':
 with open(args.config_path, "r") as f:
     config = json.load(f)
 
-def _lstm_predict(model, Is):
-    model.predict(Is_te[0])[0].squeeze().numpy()
-    pass
-
 def train(
     Is_tr, 
     fs_tr, 
@@ -51,7 +49,7 @@ def train(
     best_model, best_evr1, best_losses, best_test_losses = None, -1e10, [], []
     
     for i, hs in enumerate(hparams):
-        model = torch.nn.LSTM(1, hidden_size, 1, batch_first=True)
+        model = LSTM(hidden_size)
         criterion = torch.nn.PoissonNLLLoss(log_input=False, reduction="none", eps=config["eps"])
         optimizer = torch.optim.Adam(model.parameters(), lr=hs["lr"])
 
@@ -70,7 +68,7 @@ def train(
             model_type='lstm'
         )
         
-        fs_pred = _lstm_predict(model, Is_val[0])
+        fs_pred = model(Is_val[0]).detach().numpy()
         evr1 = explained_variance_ratio(fs_val[0], fs_pred, bin_size)
         
         if evr1 > best_evr1:
@@ -79,7 +77,7 @@ def train(
             best_test_losses = test_losses
             best_model = model
     
-    fs_pred = _lstm_predict(model, Is_te[0])
+    fs_pred = model(Is_te[0]).detach().numpy()
     best_evr2 = explained_variance_ratio(fs_te[0], fs_pred, bin_size)
     
     return best_model, best_evr1, best_evr2, best_losses, best_test_losses

@@ -249,5 +249,5 @@ class LSTM(torch.nn.Module):
     def forward(self, Is):
         # Is has shape [B, seq_len]
         out, _ = self.lstm(Is.unsqueeze(-1)) # [B, L, hidden_size]
-        fs_pred = F.relu(self.fc(out)).squeeze()  # [B, L, 1] so squeeze
+        fs_pred = F.relu(self.fc(out)).squeeze(dim=2)  # [B, L, 1] so squeeze
         return fs_pred

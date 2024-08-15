@@ -15,7 +15,6 @@ def train_model(
     print_every: int = 10,
     bin_size = 20,
     C = 0,
-    hidden_size = None,
     model_type = 'gfr'
 ):
     if model_type == 'gfr':
@@ -43,8 +42,7 @@ def train_model(
             fs_te,
             epochs=epochs,
             print_every=print_every,
-            bin_size=bin_size,
-            hidden_size=hidden_size
+            bin_size=bin_size
         )
     return train_losses, test_losses
 
@@ -58,8 +56,7 @@ def _train_generic_model(
     fs_te,
     epochs: int = 100,
     print_every: int = 10,
-    bin_size = 20,
-    hidden_size = None
+    bin_size = 20
 ):
     # assume LSTM for now
     train_losses = []
@@ -70,9 +67,6 @@ def _train_generic_model(
 
         n = 0
         for Is, fs in zip(Is_tr, fs_tr):
-            batch_size = Is.shape[0]
-            loss = torch.zeros(batch_size).to(model.device)
-
             # Is has shape [B, seq_len]
             fs_pred = model(Is)
             loss = criterion(fs_pred * bin_size, fs * bin_size).mean()
@@ -93,10 +87,6 @@ def _train_generic_model(
         total_test_loss = 0
         with torch.no_grad():
             for Is, fs in zip(Is_te, fs_te):
-                batch_size = Is.shape[0]
-                loss = torch.zeros(batch_size).to(model.device)
-                model.reset(batch_size)
-                
                 # Is has shape [B, seq_len]
                 fs_pred = model(Is)
                 loss = criterion(fs_pred * bin_size, fs * bin_size).mean()

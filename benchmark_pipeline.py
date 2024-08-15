@@ -43,7 +43,6 @@ def train(
     fs_te,  
     bin_size,
     hidden_size,
-    device = None,
     hparams=[{"lr": 1e-3, "epochs": 100}]
 ):
     best_model, best_evr1, best_losses, best_test_losses = None, -1e10, [], []
@@ -64,7 +63,6 @@ def train(
             epochs = hs["epochs"],
             print_every = 1,
             bin_size = bin_size,
-            hidden_size=hidden_size,
             model_type='lstm'
         )
         
@@ -82,9 +80,9 @@ def train(
     
     return best_model, best_evr1, best_evr2, best_losses, best_test_losses
 
-def fit_model(cell_id, bin_size, hidden_size, device=None):
+def fit_model(cell_id, bin_size, hidden_size):
     data = get_data(cell_id)
-    Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims = get_train_test_data(data, bin_size, device=device)
+    Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, stims = get_train_test_data(data, bin_size)
     Is_tr, fs_tr, stims = sklearn.utils.shuffle(Is_tr, fs_tr, stims) # list of Tensors, each with shape [B, seq_len]
     
     if len(Is_te) == 0 or len(Is_val) == 0:
@@ -94,18 +92,18 @@ def fit_model(cell_id, bin_size, hidden_size, device=None):
     print("Start training model...")
     hparams = config["hparams"]
     model, evr1, evr2, losses, test_losses = train(
-        Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, bin_size, hidden_size, device=device, hparams=hparams
+        Is_tr, fs_tr, Is_val, fs_val, Is_te, fs_te, bin_size, hidden_size, hparams=hparams
     )
         
     print(f"{evr1}, {evr2}")
     
     return model.state_dict(), evr1, evr2, losses, test_losses
 
-def model_pipeline(cell_id, bin_size, hidden_size, device):   
+def model_pipeline(cell_id, bin_size, hidden_size):   
     params_old = None
 
     p, evr1, evr2, losses, test_losses = fit_model(
-        cell_id, bin_size, hidden_size, device=device
+        cell_id, bin_size, hidden_size
     )
 
     params = {
@@ -138,6 +136,6 @@ if __name__ == "__main__":
     for i, cell_id in enumerate(cell_ids):
         print(f"({i+1}/{len(cell_ids)}) Cell {cell_id}")
         try:
-            model_pipeline(cell_id, bin_size, hidden_size, device)
+            model_pipeline(cell_id, bin_size, hidden_size)
         except Exception as e:
             print(f"Skipping {cell_id} due to error: {e}")

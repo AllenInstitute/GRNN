@@ -1,4 +1,21 @@
 # Generalized Firing Rate Neurons
+## The GFR Model
+![schematic](images/schematic.png)
+The GFR model models the firing rate of a neuron as 
+$$
+\begin{aligned}
+    f_t &= g\left( \frac{1}{n}\sum_{i=1}^n h^{(i)}_t \right) \\ 
+    h^{(i)}_t &= (1-\lambda_i) h^{(i)}_{t-\Delta t} + \Delta t\alpha_i I_t + \Delta t\beta_i f_{t-\Delta t} \text{ for } i=1,...,n.
+\end{aligned}
+$$
+where $g$ is an activation function, which we define below. $\lambda_i\leq 0$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless.
+$$
+g(x) = \gamma\text{ReLU}\left(\text{tanh}\left(\text{poly}\left(x\right)\right)\right)\text{ s.t. }\mathrm{poly}(x)=\frac{a_0^2+a_1^2(x-b)+...+a_d^2(x-b)^d}{\sigma}
+$$
+$a_0,...,a_d$ are trainable parameters. We square $a_i$ to ensure the coefficients are non-negative. We pre-compute $\gamma$, the maximum firing rate of the neuron, $b$, the firing threshold, and $\sigma$, the maximum experimental current. $\gamma$ and $\sigma$ are fixed during training.
+
+We fit the activation function before fitting the entire model. We train different configurations of bin sizes $\Delta t$ for the model and activation bin sizes $\Delta t'$ for the activation function.
+
 ## Dataset
 The dataset consists of trained GFR model parameters for different configurations of bin sizes and activation bin sizes. We only include models that pass certain criteria, namely:
 - The data includes both noise 1 and noise 2 sweeps (used for validation and testing)
@@ -15,7 +32,11 @@ The table below lists the number of cells satisfying the above criteria:
 |       50      |            100           | 1524    |
 |      100      |            100           | 1402    |
 
-One can view more information for a given cell id in the [Allen Brain Atlas](https://celltypes.brain-map.org/experiment/electrophysiology/474626527).
+### Accessing Cell Information
+All GFR models were trained on the Allen Institute Electrophysiology Database. Each model has a corresponding cell id, whose information can be viewed in the [Allen Brain Atlas](https://celltypes.brain-map.org/experiment/electrophysiology/474626527).
+
+For example, searching for cell id 474626527 gives us the following on the database:
+![ephys](images/ephys.png)
 
 ## Loading the dataset
 To load the dataset, run
@@ -35,11 +56,50 @@ dataset = utils.df_from_json(json_dataset)
 
 The dataset is a dictionary where keys are bin size, activation bin size pairs, and the values are dataframes. Each dataframe includes information about cell id, cre-line, validation and test explained variance ratio, train and test loss, and GFR model parameters.
 
+Thus running
+``
+dataset.keys()
+``
+we get the keys
+```
+dict_keys([(10, 20), (10, 100), (20, 20), (20, 100), (50, 100), (100, 100)])
+```
+corresponding to different bin size, activation bin size pairs. As an example, ``dataset[(10, 20)]`` gives us a pandas DataFrame
+![df](images/df.png)
+
 To load a specific GFR model, use
 ```
 load_gfr_model(dataset, cell_id, bin_size, activation_bin_size)
 ```
-in `utils.py`.
+in `utils.py`. For example, running
+```
+import utils
+
+model = utils.load_gfr_model(dataset, 566517779, 10, 20)
+```
+gives us a GFR module 
+```
+GFR(
+  (g): PolynomialActivation()
+)
+```
+with with corresponding parameters saved in the dataset. Running
+```
+model.get_params()
+```
+gives us a dictionary containing the model parameters, which has the following strucutre:
+
+- `a`: $\alpha_1,\dots,\alpha_n$
+- `b`: $\beta_1,\dots,\beta_n$
+- `bin_size`: model bin size $\Delta t$
+- `g`: a nested object encoding the activation function containing:
+    - `max_current`: $\sigma$
+    - `max_firing_rate`: $\gamma$
+    - `poly_coeff`: $a_0,\dots,a_d$
+    - `b`: $b$
+    - `bin_size`: activation bin size $\Delta t'$
+    - `ds`: decay coefficients $\lambda_i$
+
 
 ## Reproducing Results
 ### Preprocessing data

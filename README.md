@@ -98,6 +98,7 @@ gives us a dictionary containing the model parameters, which has the following s
 
 - `a`: $\alpha_1,\dots,\alpha_n$
 - `b`: $\beta_1,\dots,\beta_n$
+- `ds`: decay coefficients $\lambda_i$
 - `bin_size`: model bin size $\Delta t$
 - `g`: a nested object encoding the activation function containing:
     - `max_current`: $\sigma$
@@ -105,7 +106,6 @@ gives us a dictionary containing the model parameters, which has the following s
     - `poly_coeff`: $a_0,\dots,a_d$
     - `b`: $b$
     - `bin_size`: activation bin size $\Delta t'$
-    - `ds`: decay coefficients $\lambda_i$
 
 
 ## Reproducing Results

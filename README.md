@@ -13,7 +13,7 @@ h^{(i)}_t = (1-\lambda_i)\,h^{(i)}_{t-\Delta t}
   + \Delta t\,\beta_i\,f_{t-\Delta t}
 ```
 
-for $i=1,\dots,n$. $\lambda_i\leq 0$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless. $g$ is an activation function
+for $i=1,\dots,n$. $\lambda_i\in[0,1]$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless. $g$ is an activation function
 
 ```math
 g(x) = \gamma\text{ReLU}\left(\text{tanh}\left(\text{poly}\left(x\right)\right)\right)\text{ s.t. }\mathrm{poly}(x)=\frac{a_0^2+a_1^2(x-b)+...+a_d^2(x-b)^d}{\sigma}

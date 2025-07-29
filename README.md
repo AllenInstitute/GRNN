@@ -3,8 +3,8 @@
 ![schematic](images/schematic.png)
 The GFR model models the firing rate of a neuron as 
 $$f_t = g\left( \frac{1}{n}\sum_{i=1}^n h^{(i)}_t \right)$$
-$$h^{(i)}_t = (1-\lambda_i) h^{(i)}_{t-\Delta t} + \Delta t\alpha_i I_t + \Delta t\beta_i f_{t-\Delta t} \text{ for } i=1,...,n.$$
-$\lambda_i\leq 0$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless. $g$ is an activation function
+$$h^{(i)}_t = (1-\lambda_i) h^{(i)}_{t-\Delta t} + \Delta t\alpha_i I_t + \Delta t\beta_i f_{t-\Delta t}$$
+for $i=1,\dots,n$. $\lambda_i\leq 0$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless. $g$ is an activation function
 $$g(x) = \gamma\text{ReLU}\left(\text{tanh}\left(\text{poly}\left(x\right)\right)\right)\text{ s.t. }\mathrm{poly}(x)=\frac{a_0^2+a_1^2(x-b)+...+a_d^2(x-b)^d}{\sigma}$$
 $a_0,...,a_d$ are trainable parameters. We square $a_i$ to ensure the coefficients are non-negative. We pre-compute $\gamma$, the maximum firing rate of the neuron, $b$, the firing threshold, and $\sigma$, the maximum experimental current. $\gamma$ and $\sigma$ are fixed during training.
 

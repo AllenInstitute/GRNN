@@ -94,7 +94,7 @@ with with corresponding parameters saved in the dataset. Running
 ```
 model.get_params()
 ```
-gives us a dictionary containing the model parameters, which has the following strucutre:
+gives us a dictionary containing the model parameters, which has the following structure:
 
 - `a`: $\alpha_1,\dots,\alpha_n$
 - `b`: $\beta_1,\dots,\beta_n$

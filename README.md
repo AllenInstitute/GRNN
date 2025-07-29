@@ -5,7 +5,11 @@ The GFR model models the firing rate of a neuron as
 
 $$f_t = g\left( \frac{1}{n}\sum_{i=1}^n h^{(i)}_t \right)$$
 
-$$h^{(i)}_t = (1-\lambda_i) h^{(i)}_{t-\Delta t} + \Delta t\alpha_i I_t + \Delta t\beta_i f_{t-\Delta t}$$
+```math
+h^{(i)}_t = (1-\lambda_i)\,h^{(i)}_{t-\Delta t}
+  + \Delta t\,\alpha_i\,I_t
+  + \Delta t\,\beta_i\,f_{t-\Delta t}
+```
 
 for $i=1,\dots,n$. $\lambda_i\leq 0$ are exponential decay rates, $\alpha_i$ and $\beta_i$ are exponential weights, and $\Delta t>0$ is an arbitrary time constant to ensure that the argument of the exponential function is dimensionless. $g$ is an activation function
 

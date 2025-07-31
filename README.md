@@ -40,7 +40,7 @@ The table below lists the number of cells satisfying the above criteria:
 |      100      |            100           | 1402    |
 
 ### Accessing Cell Information
-All GFR models were trained on the Allen Institute Electrophysiology Database. Each model has a corresponding cell id, whose information can be viewed in the [Allen Brain Atlas](https://celltypes.brain-map.org/experiment/electrophysiology/474626527).
+All GFR models were trained on the Allen Institute Electrophysiology Database. Each model has a corresponding cell id, whose information can be viewed in the [Allen Brain Atlas](https://celltypes.brain-map.org/data).
 
 For example, searching for cell id 474626527 gives us the following on the database:
 ![ephys](images/ephys.png)

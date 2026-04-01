@@ -19,12 +19,12 @@ def get_random_neurons(n_neurons, save_path="model/gfr_dataset.pickle", bin_size
         
     return neurons, chosen_ids
 
-def get_neuron_layer(n_neurons, freeze_g=True, default=True):
+def get_neuron_layer(n_neurons, freeze_g=True, default=True, bio_units=True):
     if default:
-        neurons = [GFR.default() for _ in range(n_neurons)]
+        neurons = [GFR.default(bio_units=bio_units) for _ in range(n_neurons)]
     else:
         neurons, _ = get_random_neurons(n_neurons)
-    return BatchGFR(neurons, freeze_g=freeze_g)
+    return BatchGFR(neurons, freeze_g=freeze_g, bio_units=bio_units)
 
 # GFR-RNN with default parameters
 class Network(torch.nn.Module):
@@ -35,7 +35,8 @@ class Network(torch.nn.Module):
             out_dim, 
             freeze_neurons=True,
             freeze_g=True,
-            device=None
+            device=None,
+            bio_units=True
         ):
         super().__init__()
         
@@ -48,7 +49,7 @@ class Network(torch.nn.Module):
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
-        self.hidden_neurons = get_neuron_layer(hidden_dim, freeze_g=freeze_g)
+        self.hidden_neurons = get_neuron_layer(hidden_dim, freeze_g=freeze_g, bio_units=bio_units)
         self.hidden_neurons.device = device
         if freeze_neurons:
             self.hidden_neurons.freeze_parameters()

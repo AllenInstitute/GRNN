@@ -87,7 +87,9 @@ if __name__ == "__main__":
                 hidden_dim, 
                 out_dim,
                 freeze_neurons=freeze_neurons, 
-                freeze_g=freeze_activations
+                freeze_g=freeze_activations,
+                device=device,
+                bio_units=False,
             ).to(device)
     else:
         pass
@@ -99,6 +101,7 @@ if __name__ == "__main__":
         epochs=epochs, 
         lr=lr,
         variant=variant,
+        device=device,
     )
 
     train_acc = accuracy(model, train_loader, variant=variant, device=device)

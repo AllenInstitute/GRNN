@@ -117,8 +117,8 @@ def evaluate(model, data_loader, variant, device):
 # ═══════════════════════════════════════════════════════════════════════════
 def main():
     parser = argparse.ArgumentParser(description="GFR-RNN vs SNN comparison on seq-MNIST")
-    parser.add_argument("--hidden_dim", type=int, default=256)
-    parser.add_argument("--epochs",     type=int, default=30)
+    parser.add_argument("--hidden_dim", type=int, default=64)
+    parser.add_argument("--epochs",     type=int, default=300)
     parser.add_argument("--lr",         type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--variant",    type=str, default="l", choices=["l", "p"])
@@ -141,10 +141,13 @@ def main():
     )
 
     # ── Define all models ──────────────────────────────────────────────
+    # GFR-RNN: neuron a,b are trainable, activation g is frozen.
+    # Matches paper Appendix C.1: default init (Section 3.4), 300 epochs.
     models = {
         "GFR-RNN": Network(
             in_dim, args.hidden_dim, out_dim,
             freeze_neurons=False, freeze_g=True, device=device,
+            bio_units=False,
         ),
         "SNN-LIF": SNNNetwork(
             in_dim, args.hidden_dim, out_dim,

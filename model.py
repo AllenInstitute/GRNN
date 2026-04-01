@@ -3,12 +3,13 @@ import torch.nn.functional as F
 import numpy as np
 
 class BatchGFR(torch.nn.Module):
-    def __init__(self, models, freeze_g=True, device=None):
+    def __init__(self, models, freeze_g=True, device=None, bio_units=True):
         super().__init__()
         self.device = device
         self.n_models = len(models)
         self.g = BatchPolynomialActivation([model.g for model in models])
         self.bin_size = [model.bin_size for model in models]
+        self.bio_units = bio_units
         
         self.ds = torch.nn.Parameter(models[0].ds.detach().cpu(), requires_grad=False)
         self.n_hidden = len(self.ds)
@@ -26,7 +27,8 @@ class BatchGFR(torch.nn.Module):
     # currents shape [B, n_models]
     def forward(self, currents):
         x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
-        y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
+        fr_scale = 1000 if self.bio_units else 1
+        y = fr_scale * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
         self.v = torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
         self.fs = self.g(torch.mean(self.v, dim=2))
         return self.fs # shape [B, n_models]
@@ -46,12 +48,14 @@ class GFR(torch.nn.Module):
         ds,
         bin_size,
         freeze_g = True,
-        device = None
+        device = None,
+        bio_units = True
     ):
         super().__init__()
         self.g = g
         self.bin_size = bin_size
         self.device = device
+        self.bio_units = bio_units
         
         self.ds = torch.nn.Parameter(ds.clone().detach(), requires_grad=False)
         self.n = len(self.ds)
@@ -71,7 +75,8 @@ class GFR(torch.nn.Module):
         currents # shape [B, 1], currents for time t
     ):
         x = torch.einsum("ij,jk->ijk", currents, self.a) # shape [B, n_models, n_hidden]
-        y = 1000 * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
+        fr_scale = 1000 if self.bio_units else 1
+        y = fr_scale * torch.einsum("ij,jk->ijk", self.fs, self.b) # shape [B, n_models, n_hidden]
         self.v =  torch.einsum("k,ijk->ijk", 1 - self.ds, self.v) + x + y # shape [B, n_models, n_hidden]
         self.fs = self.g(torch.mean(self.v, dim=2))
         return self.fs # shape [B, n_models]
@@ -84,26 +89,27 @@ class GFR(torch.nn.Module):
         return self.a.norm(p=p) + self.b.norm(p=p)
 
     @classmethod
-    def default(cls, freeze_g=True, device=None):
+    def default(cls, freeze_g=True, device=None, bio_units=True):
         g = PolynomialActivation.default()
         ds = torch.tensor([1.0000, 0.6321, 0.3935, 0.1813])
         a = torch.zeros(ds.shape[0])
         a[0] = ds.shape[0]
         b = torch.zeros(ds.shape[0])
-        model = cls(g, ds, 1, freeze_g=freeze_g, device=device)
+        model = cls(g, ds, 1, freeze_g=freeze_g, device=device, bio_units=bio_units)
         model.a = torch.nn.Parameter(a.unsqueeze(dim=0))
         model.b = torch.nn.Parameter(b.unsqueeze(dim=0))
         return model
 
     @classmethod
-    def from_params(cls, params, freeze_g=True, device=None):
+    def from_params(cls, params, freeze_g=True, device=None, bio_units=True):
         g = PolynomialActivation.from_params(params["g"])
         model = cls(
             g, 
             torch.tensor(params["ds"]), 
             params["bin_size"], 
             freeze_g=freeze_g, 
-            device=device
+            device=device,
+            bio_units=bio_units
         )
         model.a = torch.nn.Parameter(torch.tensor(params["a"]))
         model.b = torch.nn.Parameter(torch.tensor(params["b"]))

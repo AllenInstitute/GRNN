@@ -125,14 +125,19 @@ def main():
     parser.add_argument("--seed",       type=int, default=42)
     parser.add_argument("--beta",       type=float, default=0.95, help="LIF decay")
     parser.add_argument("--alpha",      type=float, default=0.9,  help="Synaptic current decay")
+    parser.add_argument("--snn_hidden_dim", type=int, default=None,
+                        help="Hidden dim for SNN models (default: same as --hidden_dim)")
     args = parser.parse_args()
+    if args.snn_hidden_dim is None:
+        args.snn_hidden_dim = args.hidden_dim
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     in_dim = 1 if args.variant == "p" else 28
     out_dim = 10
 
     print(f"Device: {device}")
-    print(f"Config: hidden_dim={args.hidden_dim}, epochs={args.epochs}, lr={args.lr}, "
+    print(f"Config: hidden_dim={args.hidden_dim}, snn_hidden_dim={args.snn_hidden_dim}, "
+          f"epochs={args.epochs}, lr={args.lr}, "
           f"batch_size={args.batch_size}, variant={args.variant}, seed={args.seed}\n")
 
     # ── Same data for all models (seeded shuffle) ──────────────────────
@@ -150,11 +155,11 @@ def main():
             bio_units=False,
         ),
         "SNN-LIF": SNNNetwork(
-            in_dim, args.hidden_dim, out_dim,
+            in_dim, args.snn_hidden_dim, out_dim,
             beta=args.beta, device=device,
         ),
         "SNN-Synaptic": SNNNetworkSynaptic(
-            in_dim, args.hidden_dim, out_dim,
+            in_dim, args.snn_hidden_dim, out_dim,
             alpha=args.alpha, beta=args.beta, device=device,
         ),
     }

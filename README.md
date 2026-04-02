@@ -180,6 +180,56 @@ This trains three models with identical architecture, data splits, training prot
 
 All models share the same recurrent architecture: `Linear(28→H) → Linear(H→H, recurrent) → neuron layer → Linear(H→10)`, trained with Adam, CrossEntropyLoss, and gradient clipping at 5. Evaluation uses 5 zero-input readout steps with softmax-averaged predictions.
 
+#### SNN neuron models
+
+Both SNN baselines use the same network-level input current at each timestep $t$:
+
+```math
+I[t] = W_1 \, x[t] + W_2 \, S[t-1]
+```
+
+where $W_1 \in \mathbb{R}^{H \times d}$ is the feedforward weight, $W_2 \in \mathbb{R}^{H \times H}$ is the recurrent weight, $x[t]$ is the input (one row of the image), and $S[t-1]$ is the previous spike vector.
+
+**SNN-LIF** updates a single membrane potential with a fixed decay $\beta$:
+
+```math
+U[t] = \beta \, U[t-1] + I[t] - S[t-1] \, U_{\mathrm{thr}}
+```
+
+```math
+S[t] = \Theta(U[t] - U_{\mathrm{thr}})
+```
+
+where $\beta = 0.95$ is a fixed decay rate, $U_{\mathrm{thr}} = 1$ is the firing threshold, and $\Theta$ is the Heaviside step function. The subtraction of $S[t-1] \, U_{\mathrm{thr}}$ implements a reset-by-subtraction mechanism.
+
+**SNN-Synaptic** adds a synaptic current state $I_{\mathrm{syn}}$ with its own decay $\alpha$, giving each neuron two time constants:
+
+```math
+I_{\mathrm{syn}}[t] = \alpha \, I_{\mathrm{syn}}[t-1] + W_1 \, x[t] + W_2 \, S[t-1]
+```
+
+```math
+U[t] = \beta \, U[t-1] + I_{\mathrm{syn}}[t] - S[t-1] \, U_{\mathrm{thr}}
+```
+
+```math
+S[t] = \Theta(U[t] - U_{\mathrm{thr}})
+```
+
+where $\alpha = 0.9$ and $\beta = 0.95$ are both fixed hyperparameters.
+
+In both cases, the readout is $\hat{y}[t] = W_3 \, S[t] + b_3$ where $W_3 \in \mathbb{R}^{10 \times H}$.
+
+#### Surrogate gradient training
+
+The Heaviside $\Theta$ has zero gradient almost everywhere, which blocks standard backpropagation through the spike function. Both SNN models use **surrogate gradients**: the forward pass uses hard discrete spikes, but during the backward pass $\frac{\partial S}{\partial U}$ is replaced with the smooth ATan surrogate:
+
+```math
+\frac{\partial S}{\partial U} \approx \frac{1}{\pi} \cdot \frac{1}{1 + \left(\pi \, (U - U_{\mathrm{thr}})\right)^2}
+```
+
+All other gradient computations are standard backpropagation through time (BPTT). In contrast, GFR-RNN uses a smooth, differentiable activation $g$ and requires no surrogate approximation.
+
 #### Fair parameter matching
 When using the same hidden dimension, GFR-RNN has slightly more trainable parameters than the SNN baselines because each GFR neuron contains learnable multi-timescale coefficients ($\alpha_i$, $\beta_i$ for each of $n$ timescales), whereas SNN neuron decay rates are fixed hyperparameters. Concretely, with `hidden_dim=64` the GFR-RNN has 7,178 trainable parameters while both SNN models have 6,666 — a difference of 512 parameters (64 neurons × 4 timescales × 2 coefficients).
 

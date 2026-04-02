@@ -180,6 +180,14 @@ This trains three models with identical architecture, data splits, training prot
 
 All models share the same recurrent architecture: `Linear(28→H) → Linear(H→H, recurrent) → neuron layer → Linear(H→10)`, trained with Adam, CrossEntropyLoss, and gradient clipping at 5. Evaluation uses 5 zero-input readout steps with softmax-averaged predictions.
 
+#### Fair parameter matching
+When using the same hidden dimension, GFR-RNN has slightly more trainable parameters than the SNN baselines because each GFR neuron contains learnable multi-timescale coefficients ($\alpha_i$, $\beta_i$ for each of $n$ timescales), whereas SNN neuron decay rates are fixed hyperparameters. Concretely, with `hidden_dim=64` the GFR-RNN has 7,178 trainable parameters while both SNN models have 6,666 — a difference of 512 parameters (64 neurons × 4 timescales × 2 coefficients).
+
+To ensure a fair comparison, the `--snn_hidden_dim` flag allows the SNN models to use a slightly larger hidden layer so that their total parameter count matches or exceeds the GFR-RNN. For example, with `--snn_hidden_dim 67` the SNN models have 7,179 trainable parameters (just above 7,178), eliminating the parameter-count advantage:
+```
+python compare_models.py --epochs 300 --hidden_dim 64 --snn_hidden_dim 67 --batch_size 128 --lr 1e-3 --variant l --seed 42
+```
+
 The SNN baselines use [snntorch](https://github.com/jeshraghian/snntorch) and require it as an additional dependency:
 ```
 pip install snntorch

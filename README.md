@@ -145,7 +145,7 @@ where
 ### Training a network of GFR neurons for L-MNIST
 To train the network, run
 ```
-python network_pipeline.py [lr] [epochs] [batch_size][n_nodes] [freeze_neurons] [freeze_activations]
+python network_pipeline.py [lr] [epochs] [batch_size] [n_nodes] [freeze_neurons] [freeze_activations]
 ```
 where
 - `[lr]`: learning rate used for training the network.
@@ -153,4 +153,34 @@ where
 - `[batch_size]`: training batch size.
 - `[n_nodes]`: number of recurrent nodes in the network.
 - `[freeze_neurons]`: freeze neuron weights when training; only train recurrent connections and input/output weights.
-- `[freeze_activation]`: freeze activation weights.
+- `[freeze_activations]`: freeze activation weights.
+
+For example, to reproduce the L-MNIST results from the paper (Section 3.4, Appendix C.1):
+```
+python network_pipeline.py 1e-3 300 128 64 False True
+```
+This trains a GFR-RNN with 64 hidden neurons, default initialization, learnable neuron parameters ($\alpha$, $\beta$), and frozen activation function $g$.
+
+#### Note on `bio_units`
+The GFR model includes a `bio_units` flag that controls the scaling of the recurrent feedback term ($\beta$). When `bio_units=True` (default), firing rates are scaled by a factor of 1000 to convert from spikes/ms to Hz, which is appropriate for biological neuron fitting. When `bio_units=False`, no scaling is applied, which is appropriate for abstract tasks like sequential MNIST where inputs are unitless. The `network_pipeline.py` script uses `bio_units=False` for L-MNIST training.
+
+### Comparing GFR-RNN with Spiking Neural Networks
+To run a controlled comparison between a GFR-RNN and spiking neural networks (SNN) with surrogate backpropagation on sequential MNIST, run
+```
+python compare_models.py --epochs 300 --hidden_dim 64 --batch_size 128 --lr 1e-3 --variant l --seed 42
+```
+
+This trains three models with identical architecture, data splits, training protocol, and evaluation:
+
+| Model | Neuron type | Description |
+|:------|:------------|:------------|
+| GFR-RNN | Generalized Firing Rate | Multi-timescale exponential decay with learned $\alpha$ (feedforward) and $\beta$ (recurrent), polynomial activation $g$ |
+| SNN-LIF | Leaky Integrate-and-Fire | 1st-order spiking neuron with surrogate gradient (ATan) |
+| SNN-Synaptic | Synaptic LIF | 2nd-order spiking neuron with synaptic current and membrane potential decays |
+
+All models share the same recurrent architecture: `Linear(28→H) → Linear(H→H, recurrent) → neuron layer → Linear(H→10)`, trained with Adam, CrossEntropyLoss, and gradient clipping at 5. Evaluation uses 5 zero-input readout steps with softmax-averaged predictions.
+
+The SNN baselines use [snntorch](https://github.com/jeshraghian/snntorch) and require it as an additional dependency:
+```
+pip install snntorch
+```

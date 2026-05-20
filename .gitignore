@@ -9,3 +9,4 @@ model/
 model/params/*
 misc/
 cell_types/
+runs/

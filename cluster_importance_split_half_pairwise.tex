@@ -1,0 +1,12 @@
+\begin{tabular}{llllrrrr}
+\toprule
+target & comparison & group_1 & group_2 & mean_difference & std_difference & fraction_positive & n_splits \\
+\midrule
+inhibitory_vs_excitatory & activation_minus_input_history_kernel & activation & input_history_kernel & 0.02901 & 0.01108 & 0.995 & 200 \\
+inhibitory_vs_excitatory & activation_minus_firing_rate_history_kernel & activation & firing_rate_history_kernel & 0.0212 & 0.01175 & 0.97 & 200 \\
+inhibitory_vs_excitatory & input_history_minus_firing_rate_history_kernel & input_history_kernel & firing_rate_history_kernel & -0.007809 & 0.01021 & 0.26 & 200 \\
+cre_line & activation_minus_input_history_kernel & activation & input_history_kernel & 0.02482 & 0.004869 & 1 & 200 \\
+cre_line & activation_minus_firing_rate_history_kernel & activation & firing_rate_history_kernel & 0.02034 & 0.004361 & 1 & 200 \\
+cre_line & input_history_minus_firing_rate_history_kernel & input_history_kernel & firing_rate_history_kernel & -0.004485 & 0.003697 & 0.095 & 200 \\
+\bottomrule
+\end{tabular}

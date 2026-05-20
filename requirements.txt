@@ -1,6 +1,7 @@
 allensdk
 matplotlib
 scikit-learn
+snntorch
 torch
 torchvision
 pandas

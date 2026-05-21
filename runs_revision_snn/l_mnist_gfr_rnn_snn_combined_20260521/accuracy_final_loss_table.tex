@@ -1,0 +1,15 @@
+\begin{table}
+    \caption{Accuracy and final loss on the L-MNIST task.}
+    \label{tab:rnn-snn-results}
+    \centering
+    \begin{tabular}{llllll}
+    \toprule
+    \textbf{Model} & \textbf{\# Parameters} & \textbf{Train Accuracy} & \textbf{Test Accuracy} & \textbf{Final Train Loss} & \textbf{Final Test Loss} \\
+    \midrule
+    GFR-RNN & 7355 & $0.945 \pm 0.014$ & $0.934 \pm 0.014$ & $3.88 \pm 0.59$ & $1.77 \pm 0.05$ \\
+    RNN & 7354 & $0.820 \pm 0.072$ & $0.806 \pm 0.073$ & $6.76 \pm 0.90$ & $2.51 \pm 0.14$ \\
+    SNN-LIF & 7354 & $0.940 \pm 0.006$ & $0.932 \pm 0.007$ & $24.58 \pm 1.81$ & $4.87 \pm 0.42$ \\
+    SNN-Synaptic & 7354 & $0.945 \pm 0.004$ & $0.938 \pm 0.006$ & $20.18 \pm 0.84$ & $4.14 \pm 0.32$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}

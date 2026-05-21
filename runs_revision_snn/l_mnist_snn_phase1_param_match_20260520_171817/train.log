@@ -1,0 +1,25 @@
+2026-05-20 17:18:17,631 | INFO | Starting Phase-1 parameter-matched SNN baseline run
+2026-05-20 17:18:17,631 | INFO | Output directory: runs_revision_snn/l_mnist_snn_phase1_param_match_20260520_171817
+2026-05-20 17:18:17,631 | INFO | Config: {'batch_size': 512, 'lr': 0.001, 'epochs_snn': 300, 'n_runs': 5, 'base_seed': 1234, 'num_classes': 10, 'parallel_runs': True, 'gpu_ids': '0', 'snn_hidden_dim': 68, 'snn_param_target': 'gfr-stage1', 'snn_target_gfr_hidden_dim': 65, 'snn_target_rnn_hidden_dim': 68, 'snn_target_trainable_params': 7355, 'snn_beta': 0.95, 'snn_alpha': 0.9, 'snn_num_workers': 4, 'snn_pin_memory': True, 'snn_persistent_workers': True, 'snn_prefetch_factor': 2, 'snn_fast_math': True, 'snn_amp': False, 'snn_runs_per_gpu': 2}
+2026-05-20 17:18:17,632 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-20 17:18:17,632 | INFO | GPU pool: [0]
+2026-05-20 17:18:17,632 | INFO | Concurrent workers: 2 (2 run(s) per GPU)
+2026-05-20 17:18:17,632 | INFO | Parameter target | GFR-RNN Phase-1 hidden=65 | trainable=7355 | nearest SNN hidden=68 trainable=7354 gap=-1
+2026-05-20 17:18:17,632 | INFO | Parameter match | SNN-LIF hidden=68 trainable=7354 gap_vs_target=-1 | SNN-Synaptic trainable=7354 gap_vs_target=-1
+2026-05-20 17:18:17,632 | INFO | Parameter reference | RNN hidden=68 trainable=7354 | SNN gaps vs RNN: LIF=+0 Synaptic=+0
+2026-05-20 17:18:17,632 | INFO | Parameter reference | Stage-1 GFR target hidden=65 trainable=7355 | same hidden as SNN=68 trainable=7898 | closest GFR to RNN hidden=65 trainable=7355 gap_vs_rnn=+1
+2026-05-20 17:18:17,632 | INFO | Parameter match | default Stage-2 GFR effective target=7434 | SNN gaps: LIF=-80 Synaptic=-80
+2026-05-20 17:18:17,632 | INFO | snn_lif | hidden_dim=68 | trainable_params=7354
+2026-05-20 17:18:17,633 | INFO | snn_synaptic | hidden_dim=68 | trainable_params=7354
+2026-05-20 17:33:09,843 | INFO | Completed snn_lif_run1 on GPU 0
+2026-05-20 17:33:26,016 | INFO | Completed snn_lif_run2 on GPU 0
+2026-05-20 17:48:17,801 | INFO | Completed snn_lif_run3 on GPU 0
+2026-05-20 17:48:26,083 | INFO | Completed snn_lif_run4 on GPU 0
+2026-05-20 18:03:05,723 | INFO | Completed snn_lif_run5 on GPU 0
+2026-05-20 18:06:03,212 | INFO | Completed snn_synaptic_run1 on GPU 0
+2026-05-20 18:20:09,442 | INFO | Completed snn_synaptic_run2 on GPU 0
+2026-05-20 18:23:23,836 | INFO | Completed snn_synaptic_run3 on GPU 0
+2026-05-20 18:37:18,487 | INFO | Completed snn_synaptic_run4 on GPU 0
+2026-05-20 18:40:31,839 | INFO | Completed snn_synaptic_run5 on GPU 0
+2026-05-20 18:40:33,674 | INFO | Final | SNN-LIF test acc mean/std: 0.9323 / 0.0068 | SNN-Synaptic: 0.9383 / 0.0056
+2026-05-20 18:40:33,674 | INFO | Phase-1 parameter-matched SNN baseline run complete

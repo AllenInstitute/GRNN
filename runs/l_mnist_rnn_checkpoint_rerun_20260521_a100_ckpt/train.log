@@ -1,0 +1,6 @@
+2026-05-21 10:48:22,562 | INFO | Starting RNN checkpoint rerun
+2026-05-21 10:48:22,563 | INFO | Source run: runs/l_mnist_stage1_rnn_param_match_20260518_115200
+2026-05-21 10:48:22,563 | INFO | Output directory: runs/l_mnist_rnn_checkpoint_rerun_20260521_a100_ckpt
+2026-05-21 10:48:22,563 | INFO | GPU pool: [0]
+2026-05-21 10:48:22,563 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-21 10:48:22,563 | INFO | RNN hidden_dim=68 trainable_params=7354 epochs=300

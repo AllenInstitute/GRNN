@@ -1,0 +1,2 @@
+model,n_runs,accuracy_mean,accuracy_std,first_entropy_correct_mean,first_entropy_correct_std,first_entropy_incorrect_mean,first_entropy_incorrect_std,decision_entropy_correct_mean,decision_entropy_correct_std,decision_entropy_incorrect_mean,decision_entropy_incorrect_std,n_correct_mean,n_incorrect_mean
+GFR-RNN,5,0.9342,0.013699927007104831,0.0217088954108922,0.0038300840918835607,0.253991283970298,0.06357410423157447,0.3205809085804578,0.05331906125609854,0.7895641536351002,0.03660855612052866,9342.0,658.0

@@ -37,9 +37,11 @@ def _copy_baseline_artifacts(source_dir: Path, output_dir: Path) -> None:
     histories_dir = output_dir / "histories"
     histories_dir.mkdir(parents=True, exist_ok=True)
 
-    for pattern in ("rnn_run*.json", "lstm_run*.json"):
+    for pattern in ("rnn_run*.json", "lstm_run*.json", "rnn_run*.pt", "lstm_run*.pt"):
         for path in sorted((source_dir / "histories").glob(pattern)):
             shutil.copy2(path, histories_dir / path.name)
+        for path in sorted(source_dir.glob(pattern)):
+            shutil.copy2(path, output_dir / path.name)
 
     for name in (
         "rnn_train_loss.png",
@@ -172,6 +174,20 @@ def _train_stage2(task: Dict[str, Any]) -> Dict[str, Any]:
         progress_path=progress_dir / f"{run_name}.json",
     )
 
+    checkpoint_path = output_dir / f"gfr_lmnist_stage2_run{run_idx}.pt"
+    torch.save(
+        {
+            "model_name": "stage2",
+            "state_dict": model.state_dict(),
+            "config": asdict(cfg),
+            "history": history,
+            "seed": seed,
+            "run_idx": run_idx,
+            "stage1_checkpoint": str(stage1_ckpt),
+        },
+        checkpoint_path,
+    )
+
     result = {
         "model_name": "stage2",
         "run_idx": run_idx,
@@ -180,6 +196,7 @@ def _train_stage2(task: Dict[str, Any]) -> Dict[str, Any]:
         "stage1_checkpoint": str(stage1_ckpt),
         "trainable_params": int(trainable_params),
         "total_params": int(total_params),
+        "checkpoint": str(checkpoint_path),
         "history": history,
     }
     save_json(output_dir / "histories" / f"{run_name}.json", result)

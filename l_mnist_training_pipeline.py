@@ -566,12 +566,28 @@ def train_parallel_run(task: Dict[str, Any]) -> Dict[str, Any]:
         progress_path=progress_dir / f"{run_name}.json",
     )
 
+    checkpoint_path = output_dir / f"{run_name}.pt"
+    torch.save(
+        {
+            "model_name": model_name,
+            "state_dict": model.state_dict(),
+            "config": asdict(cfg),
+            "history": history,
+            "seed": seed,
+            "run_idx": run_idx,
+            "hidden_size": int(task.get("hidden_size", cfg.rnn_hidden_dim)),
+            "stage1_ckpt": task.get("stage1_ckpt"),
+        },
+        checkpoint_path,
+    )
+
     result = {
         "model_name": model_name,
         "run_idx": run_idx,
         "seed": seed,
         "gpu_id": gpu_id,
         "trainable_params": int(params),
+        "checkpoint": str(checkpoint_path),
         "history": history,
     }
     save_json(output_dir / "histories" / f"{run_name}.json", result)

@@ -592,6 +592,19 @@ def train_snn_run(task: Dict[str, Any]) -> Dict[str, Any]:
         non_blocking=cfg.snn_pin_memory,
     )
 
+    checkpoint_path = output_dir / f"{run_name}.pt"
+    torch.save(
+        {
+            "model_name": model_name,
+            "state_dict": model.state_dict(),
+            "config": config_to_dict(cfg),
+            "history": history,
+            "seed": seed,
+            "run_idx": run_idx,
+        },
+        checkpoint_path,
+    )
+
     result = {
         "model_name": model_name,
         "run_idx": run_idx,
@@ -599,6 +612,7 @@ def train_snn_run(task: Dict[str, Any]) -> Dict[str, Any]:
         "gpu_id": gpu_id,
         "trainable_params": int(trainable_params),
         "total_params": int(total_params),
+        "checkpoint": str(checkpoint_path),
         "history": history,
     }
     save_json(output_dir / "histories" / f"{run_name}.json", result)
@@ -705,6 +719,7 @@ def build_summary(
             "hidden_size": int(cfg.snn_hidden_dim),
             "trainable_params": int(grouped[key][0]["trainable_params"]),
             "total_params": int(grouped[key][0]["total_params"]),
+            "checkpoints": [item["checkpoint"] for item in grouped[key] if "checkpoint" in item],
             "beta": float(cfg.snn_beta),
             **stats,
         }

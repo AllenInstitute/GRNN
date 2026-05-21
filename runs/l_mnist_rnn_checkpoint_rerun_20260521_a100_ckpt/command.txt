@@ -1,0 +1,1 @@
+python run_rnn_checkpoint_rerun.py --gpu-ids 0 --runs-per-gpu 2 --output-dir runs/l_mnist_rnn_checkpoint_rerun_20260521_a100_ckpt

@@ -42,22 +42,36 @@ class SNNNetwork(torch.nn.Module):
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
     def reset(self, batch_size):
-        self.spk = torch.zeros(batch_size, self.hidden_dim).to(self.device)
-        self.mem = self.lif.init_leaky()
-        # match the shape expected by fc2
-        self.mem = torch.zeros(batch_size, self.hidden_dim).to(self.device)
+        device = self.fc1.weight.device
+        dtype = self.fc1.weight.dtype
+        self.spk = torch.zeros(batch_size, self.hidden_dim, device=device, dtype=dtype)
+        self.mem = torch.zeros(batch_size, self.hidden_dim, device=device, dtype=dtype)
 
     def zero_input(self, batch_size):
-        return torch.zeros(batch_size, self.in_dim).to(self.device)
+        return torch.zeros(batch_size, self.in_dim, device=self.fc1.weight.device, dtype=self.fc1.weight.dtype)
+
+    def _advance_from_current(self, input_current):
+        recurrent_current = self.fc2(self.spk)
+        current = input_current + recurrent_current
+        self.spk, self.mem = self.lif(current, self.mem)
+        return self.fc3(self.spk)
+
+    def forward_zero_input(self):
+        return self.forward(self.zero_input(self.spk.shape[0]))
+
+    def forward_sequence(self, sequence):
+        batch_size, n_steps, _ = sequence.shape
+        self.reset(batch_size)
+        input_current = self.fc1(sequence.reshape(batch_size * n_steps, self.in_dim))
+        input_current = input_current.reshape(batch_size, n_steps, self.hidden_dim)
+        for step_current in input_current.unbind(dim=1):
+            self._advance_from_current(step_current)
+        return self.forward_zero_input()
 
     # x: [batch_size, in_dim]  — identical call signature to Network.forward
     def forward(self, x):
-        x_in = self.fc1(x)
-        x_rec = self.fc2(self.spk)
-        cur = x_in + x_rec
-        self.spk, self.mem = self.lif(cur, self.mem)
-        out = self.fc3(self.spk)
-        return out
+        input_current = self.fc1(x)
+        return self._advance_from_current(input_current)
 
 
 class SNNNetworkSynaptic(torch.nn.Module):
@@ -92,17 +106,33 @@ class SNNNetworkSynaptic(torch.nn.Module):
         self.fc3 = torch.nn.Linear(hidden_dim, out_dim)
 
     def reset(self, batch_size):
-        self.spk = torch.zeros(batch_size, self.hidden_dim).to(self.device)
-        self.syn = torch.zeros(batch_size, self.hidden_dim).to(self.device)
-        self.mem = torch.zeros(batch_size, self.hidden_dim).to(self.device)
+        device = self.fc1.weight.device
+        dtype = self.fc1.weight.dtype
+        self.spk = torch.zeros(batch_size, self.hidden_dim, device=device, dtype=dtype)
+        self.syn = torch.zeros(batch_size, self.hidden_dim, device=device, dtype=dtype)
+        self.mem = torch.zeros(batch_size, self.hidden_dim, device=device, dtype=dtype)
 
     def zero_input(self, batch_size):
-        return torch.zeros(batch_size, self.in_dim).to(self.device)
+        return torch.zeros(batch_size, self.in_dim, device=self.fc1.weight.device, dtype=self.fc1.weight.dtype)
+
+    def _advance_from_current(self, input_current):
+        recurrent_current = self.fc2(self.spk)
+        current = input_current + recurrent_current
+        self.spk, self.syn, self.mem = self.lif(current, self.syn, self.mem)
+        return self.fc3(self.spk)
+
+    def forward_zero_input(self):
+        return self.forward(self.zero_input(self.spk.shape[0]))
+
+    def forward_sequence(self, sequence):
+        batch_size, n_steps, _ = sequence.shape
+        self.reset(batch_size)
+        input_current = self.fc1(sequence.reshape(batch_size * n_steps, self.in_dim))
+        input_current = input_current.reshape(batch_size, n_steps, self.hidden_dim)
+        for step_current in input_current.unbind(dim=1):
+            self._advance_from_current(step_current)
+        return self.forward_zero_input()
 
     def forward(self, x):
-        x_in = self.fc1(x)
-        x_rec = self.fc2(self.spk)
-        cur = x_in + x_rec
-        self.spk, self.syn, self.mem = self.lif(cur, self.syn, self.mem)
-        out = self.fc3(self.spk)
-        return out
+        input_current = self.fc1(x)
+        return self._advance_from_current(input_current)

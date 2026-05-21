@@ -1,0 +1,332 @@
+2026-05-14 10:27:10,971 | INFO | Starting training pipeline
+2026-05-14 10:27:10,971 | INFO | Output directory: runs/l_mnist_pipeline_20260514_102656
+2026-05-14 10:27:10,973 | INFO | Config: {'batch_size': 512, 'lr': 0.001, 'epochs_stage1': 300, 'epochs_stage2': 300, 'epochs_lstm': 300, 'epochs_rnn': 300, 'n_runs': 5, 'gfr_stage2_target_params': 7434, 'gfr_hidden_dim': 86, 'rnn_hidden_dim': 68, 'num_classes': 10, 'bio_units': False, 'base_seed': 1234, 'output_root': 'runs', 'parallel_runs': True, 'gpu_ids': '0,1,2,3,5'}
+2026-05-14 10:27:10,973 | INFO | CUDA device: cuda:0
+2026-05-14 10:27:10,973 | INFO | GPU ids: [0, 1, 2, 3, 5]
+2026-05-14 10:27:10,973 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-14 10:27:14,080 | INFO | Stage-1 model trainable params: 11534
+2026-05-14 10:27:29,407 | INFO | stage1 | Epoch 001 | train_loss=221.9551 | train_acc=0.3242 | test_loss=29.0560 | test_acc=0.2167
+2026-05-14 10:27:43,288 | INFO | stage1 | Epoch 002 | train_loss=147.5864 | train_acc=0.5376 | test_loss=21.4243 | test_acc=0.3347
+2026-05-14 10:27:57,124 | INFO | stage1 | Epoch 003 | train_loss=110.4653 | train_acc=0.6645 | test_loss=16.8968 | test_acc=0.4359
+2026-05-14 10:28:09,264 | INFO | stage1 | Epoch 004 | train_loss=90.0216 | train_acc=0.7284 | test_loss=14.5315 | test_acc=0.4769
+2026-05-14 10:28:21,070 | INFO | stage1 | Epoch 005 | train_loss=74.6982 | train_acc=0.7838 | test_loss=11.6871 | test_acc=0.5892
+2026-05-14 10:28:33,816 | INFO | stage1 | Epoch 006 | train_loss=60.4409 | train_acc=0.8264 | test_loss=10.0364 | test_acc=0.5761
+2026-05-14 10:28:48,052 | INFO | stage1 | Epoch 007 | train_loss=54.9393 | train_acc=0.8420 | test_loss=9.8138 | test_acc=0.6499
+2026-05-14 10:29:02,860 | INFO | stage1 | Epoch 008 | train_loss=48.5834 | train_acc=0.8642 | test_loss=7.9932 | test_acc=0.6499
+2026-05-14 10:29:17,289 | INFO | stage1 | Epoch 009 | train_loss=43.6388 | train_acc=0.8877 | test_loss=8.0849 | test_acc=0.7019
+2026-05-14 10:29:31,041 | INFO | stage1 | Epoch 010 | train_loss=38.8035 | train_acc=0.9041 | test_loss=6.1741 | test_acc=0.7637
+2026-05-14 10:29:43,033 | INFO | stage1 | Epoch 011 | train_loss=33.8750 | train_acc=0.9185 | test_loss=5.7709 | test_acc=0.7359
+2026-05-14 10:29:56,206 | INFO | stage1 | Epoch 012 | train_loss=32.0784 | train_acc=0.9228 | test_loss=5.0861 | test_acc=0.7528
+2026-05-14 10:30:09,438 | INFO | stage1 | Epoch 013 | train_loss=29.4789 | train_acc=0.9298 | test_loss=5.4220 | test_acc=0.7289
+2026-05-14 10:30:20,625 | INFO | stage1 | Epoch 014 | train_loss=27.4489 | train_acc=0.9348 | test_loss=4.4563 | test_acc=0.8029
+2026-05-14 10:30:34,653 | INFO | stage1 | Epoch 015 | train_loss=24.9114 | train_acc=0.9409 | test_loss=4.2685 | test_acc=0.7779
+2026-05-14 10:30:46,538 | INFO | stage1 | Epoch 016 | train_loss=23.8766 | train_acc=0.9440 | test_loss=4.0063 | test_acc=0.7901
+2026-05-14 10:30:58,735 | INFO | stage1 | Epoch 017 | train_loss=22.3978 | train_acc=0.9467 | test_loss=4.1097 | test_acc=0.8004
+2026-05-14 10:31:12,103 | INFO | stage1 | Epoch 018 | train_loss=21.7348 | train_acc=0.9488 | test_loss=3.6152 | test_acc=0.8085
+2026-05-14 10:31:25,068 | INFO | stage1 | Epoch 019 | train_loss=21.3509 | train_acc=0.9491 | test_loss=3.7886 | test_acc=0.7664
+2026-05-14 10:31:36,554 | INFO | stage1 | Epoch 020 | train_loss=20.6423 | train_acc=0.9509 | test_loss=3.4554 | test_acc=0.8173
+2026-05-14 10:31:48,973 | INFO | stage1 | Epoch 021 | train_loss=19.6958 | train_acc=0.9532 | test_loss=3.8103 | test_acc=0.8134
+2026-05-14 10:32:01,319 | INFO | stage1 | Epoch 022 | train_loss=18.7253 | train_acc=0.9556 | test_loss=4.0774 | test_acc=0.8131
+2026-05-14 10:32:13,068 | INFO | stage1 | Epoch 023 | train_loss=18.3510 | train_acc=0.9566 | test_loss=3.2118 | test_acc=0.8231
+2026-05-14 10:32:26,620 | INFO | stage1 | Epoch 024 | train_loss=17.8899 | train_acc=0.9574 | test_loss=4.2063 | test_acc=0.8439
+2026-05-14 10:32:39,501 | INFO | stage1 | Epoch 025 | train_loss=17.6657 | train_acc=0.9586 | test_loss=2.9556 | test_acc=0.8623
+2026-05-14 10:32:52,360 | INFO | stage1 | Epoch 026 | train_loss=16.1327 | train_acc=0.9616 | test_loss=3.7163 | test_acc=0.8483
+2026-05-14 10:33:04,461 | INFO | stage1 | Epoch 027 | train_loss=16.4401 | train_acc=0.9609 | test_loss=3.1637 | test_acc=0.8630
+2026-05-14 10:33:17,154 | INFO | stage1 | Epoch 028 | train_loss=16.0404 | train_acc=0.9619 | test_loss=3.0554 | test_acc=0.8533
+2026-05-14 10:33:28,896 | INFO | stage1 | Epoch 029 | train_loss=16.9067 | train_acc=0.9596 | test_loss=2.9097 | test_acc=0.8396
+2026-05-14 10:33:41,140 | INFO | stage1 | Epoch 030 | train_loss=15.0967 | train_acc=0.9638 | test_loss=3.0172 | test_acc=0.8541
+2026-05-14 10:33:54,156 | INFO | stage1 | Epoch 031 | train_loss=15.4192 | train_acc=0.9629 | test_loss=2.8923 | test_acc=0.8806
+2026-05-14 10:34:08,174 | INFO | stage1 | Epoch 032 | train_loss=14.6101 | train_acc=0.9649 | test_loss=3.2536 | test_acc=0.8253
+2026-05-14 10:34:21,484 | INFO | stage1 | Epoch 033 | train_loss=14.2887 | train_acc=0.9658 | test_loss=2.6038 | test_acc=0.8720
+2026-05-14 10:34:33,263 | INFO | stage1 | Epoch 034 | train_loss=13.9792 | train_acc=0.9662 | test_loss=3.1622 | test_acc=0.8677
+2026-05-14 10:34:44,913 | INFO | stage1 | Epoch 035 | train_loss=13.9247 | train_acc=0.9671 | test_loss=2.6549 | test_acc=0.8611
+2026-05-14 10:34:57,588 | INFO | stage1 | Epoch 036 | train_loss=13.3768 | train_acc=0.9682 | test_loss=2.9384 | test_acc=0.8612
+2026-05-14 10:35:09,779 | INFO | stage1 | Epoch 037 | train_loss=14.3596 | train_acc=0.9655 | test_loss=2.5946 | test_acc=0.8773
+2026-05-14 10:35:21,192 | INFO | stage1 | Epoch 038 | train_loss=13.6216 | train_acc=0.9682 | test_loss=2.7340 | test_acc=0.8701
+2026-05-14 10:35:32,852 | INFO | stage1 | Epoch 039 | train_loss=12.8464 | train_acc=0.9687 | test_loss=2.5387 | test_acc=0.8846
+2026-05-14 10:35:44,215 | INFO | stage1 | Epoch 040 | train_loss=12.5808 | train_acc=0.9699 | test_loss=2.4196 | test_acc=0.8933
+2026-05-14 10:35:55,564 | INFO | stage1 | Epoch 041 | train_loss=12.5523 | train_acc=0.9706 | test_loss=2.6155 | test_acc=0.9038
+2026-05-14 10:36:07,099 | INFO | stage1 | Epoch 042 | train_loss=11.9560 | train_acc=0.9717 | test_loss=2.5092 | test_acc=0.8959
+2026-05-14 10:36:20,740 | INFO | stage1 | Epoch 043 | train_loss=11.7165 | train_acc=0.9715 | test_loss=2.2411 | test_acc=0.8958
+2026-05-14 10:36:33,640 | INFO | stage1 | Epoch 044 | train_loss=11.5136 | train_acc=0.9721 | test_loss=2.2197 | test_acc=0.8619
+2026-05-14 10:36:47,485 | INFO | stage1 | Epoch 045 | train_loss=11.6217 | train_acc=0.9719 | test_loss=2.4401 | test_acc=0.8430
+2026-05-14 10:37:00,846 | INFO | stage1 | Epoch 046 | train_loss=11.8293 | train_acc=0.9714 | test_loss=2.2716 | test_acc=0.8686
+2026-05-14 10:37:13,606 | INFO | stage1 | Epoch 047 | train_loss=11.3278 | train_acc=0.9730 | test_loss=2.6821 | test_acc=0.8588
+2026-05-14 10:37:26,890 | INFO | stage1 | Epoch 048 | train_loss=11.0469 | train_acc=0.9745 | test_loss=2.3704 | test_acc=0.9126
+2026-05-14 10:37:38,947 | INFO | stage1 | Epoch 049 | train_loss=10.6981 | train_acc=0.9747 | test_loss=2.6212 | test_acc=0.9069
+2026-05-14 10:37:50,295 | INFO | stage1 | Epoch 050 | train_loss=11.1433 | train_acc=0.9729 | test_loss=2.4901 | test_acc=0.8654
+2026-05-14 10:38:03,825 | INFO | stage1 | Epoch 051 | train_loss=10.3152 | train_acc=0.9750 | test_loss=2.2603 | test_acc=0.8962
+2026-05-14 10:38:17,175 | INFO | stage1 | Epoch 052 | train_loss=10.9015 | train_acc=0.9744 | test_loss=2.9140 | test_acc=0.8573
+2026-05-14 10:38:29,704 | INFO | stage1 | Epoch 053 | train_loss=11.4254 | train_acc=0.9725 | test_loss=2.6858 | test_acc=0.8515
+2026-05-14 10:38:42,488 | INFO | stage1 | Epoch 054 | train_loss=10.9185 | train_acc=0.9737 | test_loss=2.6298 | test_acc=0.8763
+2026-05-14 10:38:56,908 | INFO | stage1 | Epoch 055 | train_loss=10.1391 | train_acc=0.9761 | test_loss=2.0190 | test_acc=0.9003
+2026-05-14 10:39:10,479 | INFO | stage1 | Epoch 056 | train_loss=9.9605 | train_acc=0.9762 | test_loss=2.0543 | test_acc=0.9026
+2026-05-14 10:39:24,318 | INFO | stage1 | Epoch 057 | train_loss=10.3842 | train_acc=0.9753 | test_loss=2.5280 | test_acc=0.8904
+2026-05-14 10:39:38,163 | INFO | stage1 | Epoch 058 | train_loss=10.0561 | train_acc=0.9758 | test_loss=4.6531 | test_acc=0.7988
+2026-05-14 10:39:52,839 | INFO | stage1 | Epoch 059 | train_loss=10.7608 | train_acc=0.9739 | test_loss=2.3308 | test_acc=0.8955
+2026-05-14 10:40:05,994 | INFO | stage1 | Epoch 060 | train_loss=10.1478 | train_acc=0.9758 | test_loss=2.2201 | test_acc=0.8987
+2026-05-14 10:40:17,596 | INFO | stage1 | Epoch 061 | train_loss=9.4090 | train_acc=0.9772 | test_loss=2.1309 | test_acc=0.8889
+2026-05-14 10:40:29,239 | INFO | stage1 | Epoch 062 | train_loss=9.3501 | train_acc=0.9771 | test_loss=2.5723 | test_acc=0.8597
+2026-05-14 10:40:41,118 | INFO | stage1 | Epoch 063 | train_loss=9.3874 | train_acc=0.9779 | test_loss=2.1005 | test_acc=0.8807
+2026-05-14 10:40:53,326 | INFO | stage1 | Epoch 064 | train_loss=9.7464 | train_acc=0.9761 | test_loss=2.5274 | test_acc=0.8930
+2026-05-14 10:41:05,912 | INFO | stage1 | Epoch 065 | train_loss=9.2808 | train_acc=0.9778 | test_loss=2.4805 | test_acc=0.8339
+2026-05-14 10:41:18,727 | INFO | stage1 | Epoch 066 | train_loss=9.4041 | train_acc=0.9775 | test_loss=1.9768 | test_acc=0.8710
+2026-05-14 10:41:31,509 | INFO | stage1 | Epoch 067 | train_loss=8.2801 | train_acc=0.9801 | test_loss=2.0951 | test_acc=0.8704
+2026-05-14 10:41:45,213 | INFO | stage1 | Epoch 068 | train_loss=8.4850 | train_acc=0.9801 | test_loss=2.3812 | test_acc=0.8989
+2026-05-14 10:41:58,828 | INFO | stage1 | Epoch 069 | train_loss=9.6697 | train_acc=0.9759 | test_loss=2.1138 | test_acc=0.9119
+2026-05-14 10:42:11,355 | INFO | stage1 | Epoch 070 | train_loss=8.8508 | train_acc=0.9782 | test_loss=2.0380 | test_acc=0.8827
+2026-05-14 10:42:25,166 | INFO | stage1 | Epoch 071 | train_loss=9.1861 | train_acc=0.9782 | test_loss=2.0937 | test_acc=0.8843
+2026-05-14 10:42:37,367 | INFO | stage1 | Epoch 072 | train_loss=8.9591 | train_acc=0.9781 | test_loss=2.4783 | test_acc=0.8993
+2026-05-14 10:42:50,252 | INFO | stage1 | Epoch 073 | train_loss=8.7186 | train_acc=0.9786 | test_loss=1.9714 | test_acc=0.9113
+2026-05-14 10:43:02,707 | INFO | stage1 | Epoch 074 | train_loss=8.8672 | train_acc=0.9785 | test_loss=2.0640 | test_acc=0.8713
+2026-05-14 10:43:16,707 | INFO | stage1 | Epoch 075 | train_loss=8.1360 | train_acc=0.9805 | test_loss=1.9994 | test_acc=0.8929
+2026-05-14 10:43:30,205 | INFO | stage1 | Epoch 076 | train_loss=8.0766 | train_acc=0.9806 | test_loss=2.0611 | test_acc=0.9135
+2026-05-14 10:43:43,122 | INFO | stage1 | Epoch 077 | train_loss=8.4819 | train_acc=0.9798 | test_loss=1.8892 | test_acc=0.9111
+2026-05-14 10:43:57,536 | INFO | stage1 | Epoch 078 | train_loss=7.8834 | train_acc=0.9810 | test_loss=2.1859 | test_acc=0.8958
+2026-05-14 10:44:10,370 | INFO | stage1 | Epoch 079 | train_loss=7.9282 | train_acc=0.9803 | test_loss=2.6107 | test_acc=0.8834
+2026-05-14 10:44:22,903 | INFO | stage1 | Epoch 080 | train_loss=7.7050 | train_acc=0.9813 | test_loss=2.1397 | test_acc=0.9097
+2026-05-14 10:44:34,463 | INFO | stage1 | Epoch 081 | train_loss=9.0641 | train_acc=0.9780 | test_loss=2.0719 | test_acc=0.9050
+2026-05-14 10:44:46,513 | INFO | stage1 | Epoch 082 | train_loss=8.3752 | train_acc=0.9793 | test_loss=2.1295 | test_acc=0.8924
+2026-05-14 10:44:57,777 | INFO | stage1 | Epoch 083 | train_loss=8.0370 | train_acc=0.9800 | test_loss=2.3777 | test_acc=0.9105
+2026-05-14 10:45:10,800 | INFO | stage1 | Epoch 084 | train_loss=8.5359 | train_acc=0.9784 | test_loss=2.4466 | test_acc=0.9258
+2026-05-14 10:45:24,658 | INFO | stage1 | Epoch 085 | train_loss=8.0647 | train_acc=0.9801 | test_loss=1.8910 | test_acc=0.9317
+2026-05-14 10:45:38,099 | INFO | stage1 | Epoch 086 | train_loss=7.6931 | train_acc=0.9814 | test_loss=1.8771 | test_acc=0.9071
+2026-05-14 10:45:52,195 | INFO | stage1 | Epoch 087 | train_loss=7.3650 | train_acc=0.9822 | test_loss=1.8479 | test_acc=0.8918
+2026-05-14 10:46:05,979 | INFO | stage1 | Epoch 088 | train_loss=7.3077 | train_acc=0.9824 | test_loss=2.0042 | test_acc=0.9093
+2026-05-14 10:46:18,755 | INFO | stage1 | Epoch 089 | train_loss=7.8879 | train_acc=0.9808 | test_loss=2.1618 | test_acc=0.9097
+2026-05-14 10:46:31,465 | INFO | stage1 | Epoch 090 | train_loss=7.2864 | train_acc=0.9827 | test_loss=1.9481 | test_acc=0.8826
+2026-05-14 10:46:44,878 | INFO | stage1 | Epoch 091 | train_loss=7.1882 | train_acc=0.9828 | test_loss=1.8903 | test_acc=0.9085
+2026-05-14 10:46:56,219 | INFO | stage1 | Epoch 092 | train_loss=7.6958 | train_acc=0.9810 | test_loss=2.1066 | test_acc=0.9144
+2026-05-14 10:47:07,737 | INFO | stage1 | Epoch 093 | train_loss=7.1608 | train_acc=0.9823 | test_loss=1.9934 | test_acc=0.9151
+2026-05-14 10:47:19,420 | INFO | stage1 | Epoch 094 | train_loss=7.5364 | train_acc=0.9814 | test_loss=1.8311 | test_acc=0.9235
+2026-05-14 10:47:31,449 | INFO | stage1 | Epoch 095 | train_loss=7.0142 | train_acc=0.9829 | test_loss=1.9076 | test_acc=0.9070
+2026-05-14 10:47:44,249 | INFO | stage1 | Epoch 096 | train_loss=7.2290 | train_acc=0.9827 | test_loss=2.0299 | test_acc=0.9102
+2026-05-14 10:47:57,106 | INFO | stage1 | Epoch 097 | train_loss=7.9707 | train_acc=0.9807 | test_loss=1.9047 | test_acc=0.9232
+2026-05-14 10:48:08,740 | INFO | stage1 | Epoch 098 | train_loss=6.8063 | train_acc=0.9837 | test_loss=1.8789 | test_acc=0.9210
+2026-05-14 10:48:20,523 | INFO | stage1 | Epoch 099 | train_loss=8.1793 | train_acc=0.9798 | test_loss=1.9801 | test_acc=0.8927
+2026-05-14 10:48:32,907 | INFO | stage1 | Epoch 100 | train_loss=6.7860 | train_acc=0.9840 | test_loss=1.9258 | test_acc=0.9128
+2026-05-14 10:48:45,062 | INFO | stage1 | Epoch 101 | train_loss=6.8766 | train_acc=0.9832 | test_loss=2.0364 | test_acc=0.9104
+2026-05-14 10:48:57,782 | INFO | stage1 | Epoch 102 | train_loss=6.9966 | train_acc=0.9829 | test_loss=1.8676 | test_acc=0.9039
+2026-05-14 10:49:09,119 | INFO | stage1 | Epoch 103 | train_loss=6.6068 | train_acc=0.9833 | test_loss=1.9266 | test_acc=0.9310
+2026-05-14 10:49:20,937 | INFO | stage1 | Epoch 104 | train_loss=7.2744 | train_acc=0.9819 | test_loss=1.9292 | test_acc=0.9045
+2026-05-14 10:49:34,227 | INFO | stage1 | Epoch 105 | train_loss=6.8399 | train_acc=0.9832 | test_loss=2.0020 | test_acc=0.9220
+2026-05-14 10:49:46,257 | INFO | stage1 | Epoch 106 | train_loss=6.8296 | train_acc=0.9835 | test_loss=2.1724 | test_acc=0.9080
+2026-05-14 10:49:57,873 | INFO | stage1 | Epoch 107 | train_loss=7.2532 | train_acc=0.9820 | test_loss=2.0612 | test_acc=0.9046
+2026-05-14 10:50:10,870 | INFO | stage1 | Epoch 108 | train_loss=7.5017 | train_acc=0.9820 | test_loss=2.1933 | test_acc=0.8853
+2026-05-14 10:50:24,402 | INFO | stage1 | Epoch 109 | train_loss=6.7608 | train_acc=0.9835 | test_loss=1.9666 | test_acc=0.9219
+2026-05-14 10:50:36,688 | INFO | stage1 | Epoch 110 | train_loss=6.7899 | train_acc=0.9833 | test_loss=1.7984 | test_acc=0.9059
+2026-05-14 10:50:49,931 | INFO | stage1 | Epoch 111 | train_loss=6.6863 | train_acc=0.9839 | test_loss=1.9503 | test_acc=0.9099
+2026-05-14 10:51:01,976 | INFO | stage1 | Epoch 112 | train_loss=6.1997 | train_acc=0.9847 | test_loss=2.0825 | test_acc=0.8936
+2026-05-14 10:51:14,040 | INFO | stage1 | Epoch 113 | train_loss=6.8031 | train_acc=0.9833 | test_loss=2.1908 | test_acc=0.8760
+2026-05-14 10:51:28,452 | INFO | stage1 | Epoch 114 | train_loss=6.5723 | train_acc=0.9838 | test_loss=1.7506 | test_acc=0.9132
+2026-05-14 10:51:42,693 | INFO | stage1 | Epoch 115 | train_loss=6.6539 | train_acc=0.9841 | test_loss=1.7957 | test_acc=0.9085
+2026-05-14 10:51:56,663 | INFO | stage1 | Epoch 116 | train_loss=6.7321 | train_acc=0.9826 | test_loss=2.0356 | test_acc=0.9038
+2026-05-14 10:52:10,242 | INFO | stage1 | Epoch 117 | train_loss=5.6325 | train_acc=0.9864 | test_loss=2.3050 | test_acc=0.8654
+2026-05-14 10:52:23,172 | INFO | stage1 | Epoch 118 | train_loss=6.0768 | train_acc=0.9847 | test_loss=1.8650 | test_acc=0.9251
+2026-05-14 10:52:36,180 | INFO | stage1 | Epoch 119 | train_loss=6.7036 | train_acc=0.9833 | test_loss=2.2236 | test_acc=0.8969
+2026-05-14 10:52:48,569 | INFO | stage1 | Epoch 120 | train_loss=6.3494 | train_acc=0.9840 | test_loss=2.2788 | test_acc=0.8979
+2026-05-14 10:53:02,619 | INFO | stage1 | Epoch 121 | train_loss=6.0217 | train_acc=0.9853 | test_loss=2.1783 | test_acc=0.9033
+2026-05-14 10:53:16,139 | INFO | stage1 | Epoch 122 | train_loss=6.6677 | train_acc=0.9834 | test_loss=2.0342 | test_acc=0.9311
+2026-05-14 10:53:27,425 | INFO | stage1 | Epoch 123 | train_loss=6.3825 | train_acc=0.9843 | test_loss=1.8864 | test_acc=0.9029
+2026-05-14 10:53:38,912 | INFO | stage1 | Epoch 124 | train_loss=6.2445 | train_acc=0.9842 | test_loss=1.8021 | test_acc=0.8901
+2026-05-14 10:53:50,505 | INFO | stage1 | Epoch 125 | train_loss=5.4069 | train_acc=0.9868 | test_loss=1.8996 | test_acc=0.9228
+2026-05-14 10:54:03,753 | INFO | stage1 | Epoch 126 | train_loss=5.5182 | train_acc=0.9863 | test_loss=2.0791 | test_acc=0.8999
+2026-05-14 10:54:16,331 | INFO | stage1 | Epoch 127 | train_loss=6.6385 | train_acc=0.9834 | test_loss=1.8414 | test_acc=0.9115
+2026-05-14 10:54:29,944 | INFO | stage1 | Epoch 128 | train_loss=6.0515 | train_acc=0.9852 | test_loss=1.9370 | test_acc=0.9212
+2026-05-14 10:54:41,744 | INFO | stage1 | Epoch 129 | train_loss=5.1649 | train_acc=0.9869 | test_loss=1.9201 | test_acc=0.9083
+2026-05-14 10:54:54,312 | INFO | stage1 | Epoch 130 | train_loss=6.3247 | train_acc=0.9841 | test_loss=2.1049 | test_acc=0.9138
+2026-05-14 10:55:08,478 | INFO | stage1 | Epoch 131 | train_loss=5.3347 | train_acc=0.9866 | test_loss=2.0154 | test_acc=0.9056
+2026-05-14 10:55:20,493 | INFO | stage1 | Epoch 132 | train_loss=6.1037 | train_acc=0.9855 | test_loss=2.0443 | test_acc=0.9137
+2026-05-14 10:55:34,089 | INFO | stage1 | Epoch 133 | train_loss=6.6767 | train_acc=0.9833 | test_loss=2.0450 | test_acc=0.9297
+2026-05-14 10:55:47,411 | INFO | stage1 | Epoch 134 | train_loss=5.7230 | train_acc=0.9857 | test_loss=2.0921 | test_acc=0.9110
+2026-05-14 10:55:59,633 | INFO | stage1 | Epoch 135 | train_loss=5.3927 | train_acc=0.9866 | test_loss=2.0301 | test_acc=0.9311
+2026-05-14 10:56:11,680 | INFO | stage1 | Epoch 136 | train_loss=5.1264 | train_acc=0.9875 | test_loss=1.8453 | test_acc=0.9058
+2026-05-14 10:56:24,156 | INFO | stage1 | Epoch 137 | train_loss=5.6581 | train_acc=0.9861 | test_loss=1.9616 | test_acc=0.9129
+2026-05-14 10:56:35,883 | INFO | stage1 | Epoch 138 | train_loss=5.3729 | train_acc=0.9865 | test_loss=1.7293 | test_acc=0.9102
+2026-05-14 10:56:49,218 | INFO | stage1 | Epoch 139 | train_loss=5.6226 | train_acc=0.9863 | test_loss=2.0723 | test_acc=0.8867
+2026-05-14 10:57:03,149 | INFO | stage1 | Epoch 140 | train_loss=6.2092 | train_acc=0.9846 | test_loss=2.0174 | test_acc=0.8689
+2026-05-14 10:57:16,953 | INFO | stage1 | Epoch 141 | train_loss=5.6655 | train_acc=0.9865 | test_loss=2.1026 | test_acc=0.8980
+2026-05-14 10:57:29,518 | INFO | stage1 | Epoch 142 | train_loss=5.2429 | train_acc=0.9866 | test_loss=1.8141 | test_acc=0.8918
+2026-05-14 10:57:43,131 | INFO | stage1 | Epoch 143 | train_loss=4.5404 | train_acc=0.9887 | test_loss=1.9603 | test_acc=0.9125
+2026-05-14 10:57:55,161 | INFO | stage1 | Epoch 144 | train_loss=5.8491 | train_acc=0.9855 | test_loss=1.9666 | test_acc=0.8928
+2026-05-14 10:58:08,025 | INFO | stage1 | Epoch 145 | train_loss=6.0101 | train_acc=0.9855 | test_loss=2.1570 | test_acc=0.9246
+2026-05-14 10:58:20,005 | INFO | stage1 | Epoch 146 | train_loss=5.1668 | train_acc=0.9867 | test_loss=1.9586 | test_acc=0.9092
+2026-05-14 10:58:31,830 | INFO | stage1 | Epoch 147 | train_loss=4.8437 | train_acc=0.9879 | test_loss=1.8435 | test_acc=0.9235
+2026-05-14 10:58:43,449 | INFO | stage1 | Epoch 148 | train_loss=5.2184 | train_acc=0.9872 | test_loss=1.9585 | test_acc=0.9174
+2026-05-14 10:58:57,582 | INFO | stage1 | Epoch 149 | train_loss=6.1431 | train_acc=0.9849 | test_loss=1.9788 | test_acc=0.8864
+2026-05-14 10:59:10,065 | INFO | stage1 | Epoch 150 | train_loss=5.5431 | train_acc=0.9862 | test_loss=2.1679 | test_acc=0.8935
+2026-05-14 10:59:22,258 | INFO | stage1 | Epoch 151 | train_loss=5.2913 | train_acc=0.9865 | test_loss=2.0254 | test_acc=0.8780
+2026-05-14 10:59:34,596 | INFO | stage1 | Epoch 152 | train_loss=4.4177 | train_acc=0.9890 | test_loss=1.8623 | test_acc=0.9140
+2026-05-14 10:59:46,117 | INFO | stage1 | Epoch 153 | train_loss=4.8788 | train_acc=0.9877 | test_loss=2.2135 | test_acc=0.9162
+2026-05-14 10:59:57,845 | INFO | stage1 | Epoch 154 | train_loss=5.8087 | train_acc=0.9855 | test_loss=2.2956 | test_acc=0.9005
+2026-05-14 11:00:09,703 | INFO | stage1 | Epoch 155 | train_loss=5.6885 | train_acc=0.9855 | test_loss=1.8206 | test_acc=0.9059
+2026-05-14 11:00:22,268 | INFO | stage1 | Epoch 156 | train_loss=5.9136 | train_acc=0.9849 | test_loss=1.7450 | test_acc=0.9247
+2026-05-14 11:00:34,379 | INFO | stage1 | Epoch 157 | train_loss=5.2387 | train_acc=0.9870 | test_loss=1.9678 | test_acc=0.9143
+2026-05-14 11:00:47,239 | INFO | stage1 | Epoch 158 | train_loss=4.2672 | train_acc=0.9896 | test_loss=1.9781 | test_acc=0.9046
+2026-05-14 11:00:59,637 | INFO | stage1 | Epoch 159 | train_loss=4.2373 | train_acc=0.9893 | test_loss=1.9274 | test_acc=0.9253
+2026-05-14 11:01:12,261 | INFO | stage1 | Epoch 160 | train_loss=4.7748 | train_acc=0.9881 | test_loss=2.4306 | test_acc=0.9283
+2026-05-14 11:01:25,218 | INFO | stage1 | Epoch 161 | train_loss=5.3873 | train_acc=0.9863 | test_loss=2.1697 | test_acc=0.9052
+2026-05-14 11:01:38,451 | INFO | stage1 | Epoch 162 | train_loss=4.7731 | train_acc=0.9883 | test_loss=1.9301 | test_acc=0.9240
+2026-05-14 11:01:50,929 | INFO | stage1 | Epoch 163 | train_loss=4.5000 | train_acc=0.9887 | test_loss=1.9433 | test_acc=0.9196
+2026-05-14 11:02:03,236 | INFO | stage1 | Epoch 164 | train_loss=5.3311 | train_acc=0.9867 | test_loss=1.9857 | test_acc=0.9143
+2026-05-14 11:02:16,320 | INFO | stage1 | Epoch 165 | train_loss=4.4042 | train_acc=0.9885 | test_loss=2.2215 | test_acc=0.8860
+2026-05-14 11:02:31,895 | INFO | stage1 | Epoch 166 | train_loss=4.2597 | train_acc=0.9891 | test_loss=2.0003 | test_acc=0.9211
+2026-05-14 11:02:44,022 | INFO | stage1 | Epoch 167 | train_loss=5.1285 | train_acc=0.9871 | test_loss=1.6282 | test_acc=0.9258
+2026-05-14 11:02:57,138 | INFO | stage1 | Epoch 168 | train_loss=5.5836 | train_acc=0.9861 | test_loss=2.0468 | test_acc=0.8993
+2026-05-14 11:03:09,760 | INFO | stage1 | Epoch 169 | train_loss=5.1176 | train_acc=0.9869 | test_loss=1.8782 | test_acc=0.9193
+2026-05-14 11:03:22,640 | INFO | stage1 | Epoch 170 | train_loss=5.6245 | train_acc=0.9857 | test_loss=2.0424 | test_acc=0.9257
+2026-05-14 11:03:34,377 | INFO | stage1 | Epoch 171 | train_loss=3.9514 | train_acc=0.9902 | test_loss=2.0554 | test_acc=0.9210
+2026-05-14 11:03:46,781 | INFO | stage1 | Epoch 172 | train_loss=4.3357 | train_acc=0.9889 | test_loss=1.7264 | test_acc=0.9123
+2026-05-14 11:03:58,748 | INFO | stage1 | Epoch 173 | train_loss=4.5221 | train_acc=0.9885 | test_loss=1.8398 | test_acc=0.9081
+2026-05-14 11:04:12,064 | INFO | stage1 | Epoch 174 | train_loss=4.6490 | train_acc=0.9884 | test_loss=1.9578 | test_acc=0.9230
+2026-05-14 11:04:26,877 | INFO | stage1 | Epoch 175 | train_loss=4.0633 | train_acc=0.9894 | test_loss=1.8322 | test_acc=0.9129
+2026-05-14 11:04:41,643 | INFO | stage1 | Epoch 176 | train_loss=4.3603 | train_acc=0.9888 | test_loss=2.3082 | test_acc=0.9347
+2026-05-14 11:04:55,339 | INFO | stage1 | Epoch 177 | train_loss=4.3897 | train_acc=0.9893 | test_loss=2.2707 | test_acc=0.9045
+2026-05-14 11:05:07,649 | INFO | stage1 | Epoch 178 | train_loss=4.7820 | train_acc=0.9879 | test_loss=1.9673 | test_acc=0.9225
+2026-05-14 11:05:20,415 | INFO | stage1 | Epoch 179 | train_loss=4.7565 | train_acc=0.9878 | test_loss=2.1635 | test_acc=0.9234
+2026-05-14 11:05:32,977 | INFO | stage1 | Epoch 180 | train_loss=4.8694 | train_acc=0.9875 | test_loss=2.0096 | test_acc=0.9044
+2026-05-14 11:05:45,425 | INFO | stage1 | Epoch 181 | train_loss=4.4785 | train_acc=0.9888 | test_loss=2.0374 | test_acc=0.9137
+2026-05-14 11:05:58,050 | INFO | stage1 | Epoch 182 | train_loss=4.7949 | train_acc=0.9880 | test_loss=1.8947 | test_acc=0.9209
+2026-05-14 11:06:09,841 | INFO | stage1 | Epoch 183 | train_loss=3.7801 | train_acc=0.9905 | test_loss=1.8279 | test_acc=0.9396
+2026-05-14 11:06:23,436 | INFO | stage1 | Epoch 184 | train_loss=5.0976 | train_acc=0.9875 | test_loss=1.9635 | test_acc=0.9142
+2026-05-14 11:06:35,679 | INFO | stage1 | Epoch 185 | train_loss=4.4968 | train_acc=0.9887 | test_loss=1.9849 | test_acc=0.9211
+2026-05-14 11:06:47,992 | INFO | stage1 | Epoch 186 | train_loss=3.9183 | train_acc=0.9902 | test_loss=1.9023 | test_acc=0.9131
+2026-05-14 11:07:00,364 | INFO | stage1 | Epoch 187 | train_loss=4.1372 | train_acc=0.9896 | test_loss=1.8166 | test_acc=0.9190
+2026-05-14 11:07:12,654 | INFO | stage1 | Epoch 188 | train_loss=3.8675 | train_acc=0.9903 | test_loss=2.2418 | test_acc=0.8723
+2026-05-14 11:07:24,467 | INFO | stage1 | Epoch 189 | train_loss=5.1720 | train_acc=0.9873 | test_loss=2.0407 | test_acc=0.9235
+2026-05-14 11:07:37,297 | INFO | stage1 | Epoch 190 | train_loss=4.4212 | train_acc=0.9892 | test_loss=2.0570 | test_acc=0.9009
+2026-05-14 11:07:50,267 | INFO | stage1 | Epoch 191 | train_loss=4.5692 | train_acc=0.9888 | test_loss=2.0813 | test_acc=0.8765
+2026-05-14 11:08:03,846 | INFO | stage1 | Epoch 192 | train_loss=5.4425 | train_acc=0.9864 | test_loss=2.0456 | test_acc=0.9155
+2026-05-14 11:08:18,525 | INFO | stage1 | Epoch 193 | train_loss=4.4462 | train_acc=0.9890 | test_loss=1.8441 | test_acc=0.9128
+2026-05-14 11:08:30,138 | INFO | stage1 | Epoch 194 | train_loss=3.4341 | train_acc=0.9913 | test_loss=1.8334 | test_acc=0.9298
+2026-05-14 11:08:41,996 | INFO | stage1 | Epoch 195 | train_loss=4.7903 | train_acc=0.9882 | test_loss=1.8291 | test_acc=0.9186
+2026-05-14 11:08:55,732 | INFO | stage1 | Epoch 196 | train_loss=4.6295 | train_acc=0.9885 | test_loss=1.9969 | test_acc=0.8957
+2026-05-14 11:09:08,855 | INFO | stage1 | Epoch 197 | train_loss=4.3193 | train_acc=0.9894 | test_loss=2.2164 | test_acc=0.8856
+2026-05-14 11:09:20,448 | INFO | stage1 | Epoch 198 | train_loss=3.9164 | train_acc=0.9902 | test_loss=2.0385 | test_acc=0.8981
+2026-05-14 11:09:32,610 | INFO | stage1 | Epoch 199 | train_loss=4.3951 | train_acc=0.9888 | test_loss=1.8534 | test_acc=0.9197
+2026-05-14 11:09:43,989 | INFO | stage1 | Epoch 200 | train_loss=3.5798 | train_acc=0.9910 | test_loss=1.8201 | test_acc=0.9118
+2026-05-14 11:09:55,702 | INFO | stage1 | Epoch 201 | train_loss=3.9946 | train_acc=0.9900 | test_loss=1.9690 | test_acc=0.9297
+2026-05-14 11:10:07,316 | INFO | stage1 | Epoch 202 | train_loss=3.9659 | train_acc=0.9897 | test_loss=1.9810 | test_acc=0.9261
+2026-05-14 11:10:20,708 | INFO | stage1 | Epoch 203 | train_loss=3.8029 | train_acc=0.9904 | test_loss=1.8403 | test_acc=0.9403
+2026-05-14 11:10:32,525 | INFO | stage1 | Epoch 204 | train_loss=3.3705 | train_acc=0.9915 | test_loss=2.0052 | test_acc=0.9271
+2026-05-14 11:10:44,823 | INFO | stage1 | Epoch 205 | train_loss=4.5944 | train_acc=0.9884 | test_loss=2.2653 | test_acc=0.8958
+2026-05-14 11:10:56,559 | INFO | stage1 | Epoch 206 | train_loss=5.6978 | train_acc=0.9858 | test_loss=2.1653 | test_acc=0.9098
+2026-05-14 11:11:09,690 | INFO | stage1 | Epoch 207 | train_loss=4.4607 | train_acc=0.9886 | test_loss=1.7601 | test_acc=0.9209
+2026-05-14 11:11:22,232 | INFO | stage1 | Epoch 208 | train_loss=4.0235 | train_acc=0.9899 | test_loss=2.0474 | test_acc=0.9107
+2026-05-14 11:11:34,563 | INFO | stage1 | Epoch 209 | train_loss=4.4234 | train_acc=0.9888 | test_loss=2.1941 | test_acc=0.9364
+2026-05-14 11:11:48,049 | INFO | stage1 | Epoch 210 | train_loss=3.4690 | train_acc=0.9911 | test_loss=2.2489 | test_acc=0.9154
+2026-05-14 11:12:02,228 | INFO | stage1 | Epoch 211 | train_loss=3.5024 | train_acc=0.9914 | test_loss=1.9839 | test_acc=0.9262
+2026-05-14 11:12:15,419 | INFO | stage1 | Epoch 212 | train_loss=3.9933 | train_acc=0.9900 | test_loss=1.9988 | test_acc=0.9349
+2026-05-14 11:12:27,468 | INFO | stage1 | Epoch 213 | train_loss=5.3677 | train_acc=0.9866 | test_loss=1.9111 | test_acc=0.9151
+2026-05-14 11:12:39,805 | INFO | stage1 | Epoch 214 | train_loss=4.4023 | train_acc=0.9890 | test_loss=1.8156 | test_acc=0.9034
+2026-05-14 11:12:52,171 | INFO | stage1 | Epoch 215 | train_loss=4.2103 | train_acc=0.9892 | test_loss=1.7290 | test_acc=0.9197
+2026-05-14 11:13:04,417 | INFO | stage1 | Epoch 216 | train_loss=3.5031 | train_acc=0.9911 | test_loss=2.0213 | test_acc=0.9363
+2026-05-14 11:13:16,223 | INFO | stage1 | Epoch 217 | train_loss=3.5755 | train_acc=0.9909 | test_loss=1.9092 | test_acc=0.9318
+2026-05-14 11:13:28,291 | INFO | stage1 | Epoch 218 | train_loss=4.0534 | train_acc=0.9902 | test_loss=2.1369 | test_acc=0.9458
+2026-05-14 11:13:40,512 | INFO | stage1 | Epoch 219 | train_loss=4.5989 | train_acc=0.9881 | test_loss=2.4380 | test_acc=0.9177
+2026-05-14 11:13:52,746 | INFO | stage1 | Epoch 220 | train_loss=3.6533 | train_acc=0.9904 | test_loss=1.6623 | test_acc=0.9272
+2026-05-14 11:14:06,516 | INFO | stage1 | Epoch 221 | train_loss=3.7618 | train_acc=0.9908 | test_loss=1.8688 | test_acc=0.9202
+2026-05-14 11:14:18,767 | INFO | stage1 | Epoch 222 | train_loss=3.1678 | train_acc=0.9919 | test_loss=1.9606 | test_acc=0.9225
+2026-05-14 11:14:31,268 | INFO | stage1 | Epoch 223 | train_loss=4.2232 | train_acc=0.9894 | test_loss=1.8358 | test_acc=0.9315
+2026-05-14 11:14:43,097 | INFO | stage1 | Epoch 224 | train_loss=4.0908 | train_acc=0.9895 | test_loss=2.0593 | test_acc=0.9219
+2026-05-14 11:14:54,479 | INFO | stage1 | Epoch 225 | train_loss=3.9678 | train_acc=0.9897 | test_loss=1.7835 | test_acc=0.9164
+2026-05-14 11:15:07,419 | INFO | stage1 | Epoch 226 | train_loss=2.9266 | train_acc=0.9928 | test_loss=1.9468 | test_acc=0.9130
+2026-05-14 11:15:19,315 | INFO | stage1 | Epoch 227 | train_loss=3.6468 | train_acc=0.9907 | test_loss=2.5977 | test_acc=0.9131
+2026-05-14 11:15:30,844 | INFO | stage1 | Epoch 228 | train_loss=4.0262 | train_acc=0.9900 | test_loss=2.1498 | test_acc=0.8691
+2026-05-14 11:15:42,290 | INFO | stage1 | Epoch 229 | train_loss=5.5077 | train_acc=0.9860 | test_loss=1.8316 | test_acc=0.9201
+2026-05-14 11:15:53,632 | INFO | stage1 | Epoch 230 | train_loss=4.0798 | train_acc=0.9894 | test_loss=2.1377 | test_acc=0.9102
+2026-05-14 11:16:06,811 | INFO | stage1 | Epoch 231 | train_loss=4.2349 | train_acc=0.9897 | test_loss=1.8567 | test_acc=0.9326
+2026-05-14 11:16:19,186 | INFO | stage1 | Epoch 232 | train_loss=2.8324 | train_acc=0.9928 | test_loss=1.8841 | test_acc=0.9350
+2026-05-14 11:16:31,942 | INFO | stage1 | Epoch 233 | train_loss=2.6201 | train_acc=0.9934 | test_loss=1.9652 | test_acc=0.9369
+2026-05-14 11:16:43,919 | INFO | stage1 | Epoch 234 | train_loss=3.4687 | train_acc=0.9912 | test_loss=1.8729 | test_acc=0.9247
+2026-05-14 11:16:56,584 | INFO | stage1 | Epoch 235 | train_loss=4.3646 | train_acc=0.9886 | test_loss=2.0458 | test_acc=0.9256
+2026-05-14 11:17:07,940 | INFO | stage1 | Epoch 236 | train_loss=4.1232 | train_acc=0.9896 | test_loss=1.9335 | test_acc=0.9230
+2026-05-14 11:17:19,545 | INFO | stage1 | Epoch 237 | train_loss=3.7380 | train_acc=0.9905 | test_loss=1.9308 | test_acc=0.8997
+2026-05-14 11:17:31,253 | INFO | stage1 | Epoch 238 | train_loss=2.9339 | train_acc=0.9926 | test_loss=1.8482 | test_acc=0.9051
+2026-05-14 11:17:43,769 | INFO | stage1 | Epoch 239 | train_loss=3.9303 | train_acc=0.9899 | test_loss=2.1115 | test_acc=0.8750
+2026-05-14 11:17:57,327 | INFO | stage1 | Epoch 240 | train_loss=4.7948 | train_acc=0.9879 | test_loss=2.3342 | test_acc=0.8694
+2026-05-14 11:18:10,834 | INFO | stage1 | Epoch 241 | train_loss=5.0625 | train_acc=0.9872 | test_loss=1.9143 | test_acc=0.9214
+2026-05-14 11:18:22,182 | INFO | stage1 | Epoch 242 | train_loss=3.7282 | train_acc=0.9904 | test_loss=1.8287 | test_acc=0.9368
+2026-05-14 11:18:33,757 | INFO | stage1 | Epoch 243 | train_loss=3.5993 | train_acc=0.9910 | test_loss=2.2174 | test_acc=0.9187
+2026-05-14 11:18:45,059 | INFO | stage1 | Epoch 244 | train_loss=4.6619 | train_acc=0.9885 | test_loss=1.8256 | test_acc=0.9114
+2026-05-14 11:18:56,428 | INFO | stage1 | Epoch 245 | train_loss=2.7080 | train_acc=0.9931 | test_loss=1.9405 | test_acc=0.9177
+2026-05-14 11:19:08,314 | INFO | stage1 | Epoch 246 | train_loss=2.5058 | train_acc=0.9941 | test_loss=1.9113 | test_acc=0.9324
+2026-05-14 11:19:21,422 | INFO | stage1 | Epoch 247 | train_loss=3.4854 | train_acc=0.9909 | test_loss=1.9320 | test_acc=0.9285
+2026-05-14 11:19:33,488 | INFO | stage1 | Epoch 248 | train_loss=3.3652 | train_acc=0.9913 | test_loss=1.8052 | test_acc=0.9005
+2026-05-14 11:19:45,657 | INFO | stage1 | Epoch 249 | train_loss=3.4233 | train_acc=0.9909 | test_loss=2.2493 | test_acc=0.9250
+2026-05-14 11:19:58,131 | INFO | stage1 | Epoch 250 | train_loss=3.3768 | train_acc=0.9915 | test_loss=1.9793 | test_acc=0.9080
+2026-05-14 11:20:11,959 | INFO | stage1 | Epoch 251 | train_loss=3.4337 | train_acc=0.9912 | test_loss=1.9952 | test_acc=0.9312
+2026-05-14 11:20:23,740 | INFO | stage1 | Epoch 252 | train_loss=3.5287 | train_acc=0.9910 | test_loss=1.8139 | test_acc=0.9149
+2026-05-14 11:20:37,768 | INFO | stage1 | Epoch 253 | train_loss=4.3081 | train_acc=0.9892 | test_loss=2.2624 | test_acc=0.8996
+2026-05-14 11:20:50,837 | INFO | stage1 | Epoch 254 | train_loss=3.8185 | train_acc=0.9903 | test_loss=1.8785 | test_acc=0.9138
+2026-05-14 11:21:03,999 | INFO | stage1 | Epoch 255 | train_loss=3.3020 | train_acc=0.9918 | test_loss=1.8503 | test_acc=0.9138
+2026-05-14 11:21:15,410 | INFO | stage1 | Epoch 256 | train_loss=2.4765 | train_acc=0.9939 | test_loss=1.8137 | test_acc=0.9348
+2026-05-14 11:21:27,157 | INFO | stage1 | Epoch 257 | train_loss=3.1187 | train_acc=0.9922 | test_loss=1.8005 | test_acc=0.9267
+2026-05-14 11:21:39,877 | INFO | stage1 | Epoch 258 | train_loss=2.8775 | train_acc=0.9927 | test_loss=1.8279 | test_acc=0.9176
+2026-05-14 11:21:52,082 | INFO | stage1 | Epoch 259 | train_loss=2.9000 | train_acc=0.9924 | test_loss=1.9871 | test_acc=0.9099
+2026-05-14 11:22:04,394 | INFO | stage1 | Epoch 260 | train_loss=4.7694 | train_acc=0.9883 | test_loss=2.0820 | test_acc=0.8858
+2026-05-14 11:22:16,535 | INFO | stage1 | Epoch 261 | train_loss=3.6142 | train_acc=0.9913 | test_loss=2.0434 | test_acc=0.8969
+2026-05-14 11:22:28,783 | INFO | stage1 | Epoch 262 | train_loss=3.1319 | train_acc=0.9922 | test_loss=2.0403 | test_acc=0.9328
+2026-05-14 11:22:40,135 | INFO | stage1 | Epoch 263 | train_loss=2.9014 | train_acc=0.9922 | test_loss=2.0572 | test_acc=0.9278
+2026-05-14 11:22:52,724 | INFO | stage1 | Epoch 264 | train_loss=4.1334 | train_acc=0.9893 | test_loss=2.1531 | test_acc=0.8988
+2026-05-14 11:23:05,045 | INFO | stage1 | Epoch 265 | train_loss=4.8357 | train_acc=0.9879 | test_loss=1.9737 | test_acc=0.9169
+2026-05-14 11:23:17,801 | INFO | stage1 | Epoch 266 | train_loss=3.1554 | train_acc=0.9924 | test_loss=2.3944 | test_acc=0.9091
+2026-05-14 11:23:29,625 | INFO | stage1 | Epoch 267 | train_loss=4.0914 | train_acc=0.9892 | test_loss=2.4295 | test_acc=0.8669
+2026-05-14 11:23:41,639 | INFO | stage1 | Epoch 268 | train_loss=3.5200 | train_acc=0.9915 | test_loss=1.8908 | test_acc=0.9119
+2026-05-14 11:23:53,078 | INFO | stage1 | Epoch 269 | train_loss=2.3803 | train_acc=0.9942 | test_loss=1.9785 | test_acc=0.9203
+2026-05-14 11:24:06,337 | INFO | stage1 | Epoch 270 | train_loss=3.2194 | train_acc=0.9919 | test_loss=1.9061 | test_acc=0.9257
+2026-05-14 11:24:17,756 | INFO | stage1 | Epoch 271 | train_loss=3.1949 | train_acc=0.9916 | test_loss=1.9369 | test_acc=0.8910
+2026-05-14 11:24:29,803 | INFO | stage1 | Epoch 272 | train_loss=3.4167 | train_acc=0.9916 | test_loss=1.8441 | test_acc=0.9023
+2026-05-14 11:24:42,141 | INFO | stage1 | Epoch 273 | train_loss=4.1959 | train_acc=0.9893 | test_loss=1.9143 | test_acc=0.9286
+2026-05-14 11:24:54,156 | INFO | stage1 | Epoch 274 | train_loss=3.8006 | train_acc=0.9900 | test_loss=2.0955 | test_acc=0.9060
+2026-05-14 11:25:06,253 | INFO | stage1 | Epoch 275 | train_loss=3.6222 | train_acc=0.9910 | test_loss=1.9732 | test_acc=0.9289
+2026-05-14 11:25:18,144 | INFO | stage1 | Epoch 276 | train_loss=3.3360 | train_acc=0.9916 | test_loss=2.0097 | test_acc=0.9280
+2026-05-14 11:25:29,630 | INFO | stage1 | Epoch 277 | train_loss=2.5612 | train_acc=0.9935 | test_loss=1.7427 | test_acc=0.9123
+2026-05-14 11:25:41,178 | INFO | stage1 | Epoch 278 | train_loss=1.9951 | train_acc=0.9950 | test_loss=1.8216 | test_acc=0.9279
+2026-05-14 11:25:52,597 | INFO | stage1 | Epoch 279 | train_loss=2.0072 | train_acc=0.9949 | test_loss=1.8229 | test_acc=0.9238
+2026-05-14 11:26:05,837 | INFO | stage1 | Epoch 280 | train_loss=4.9484 | train_acc=0.9873 | test_loss=2.2873 | test_acc=0.8930
+2026-05-14 11:26:18,199 | INFO | stage1 | Epoch 281 | train_loss=4.4414 | train_acc=0.9887 | test_loss=1.9455 | test_acc=0.9074
+2026-05-14 11:26:30,370 | INFO | stage1 | Epoch 282 | train_loss=3.0926 | train_acc=0.9924 | test_loss=2.0741 | test_acc=0.9189
+2026-05-14 11:26:42,182 | INFO | stage1 | Epoch 283 | train_loss=3.1885 | train_acc=0.9918 | test_loss=2.0583 | test_acc=0.9201
+2026-05-14 11:26:54,964 | INFO | stage1 | Epoch 284 | train_loss=2.9033 | train_acc=0.9926 | test_loss=2.2379 | test_acc=0.8812
+2026-05-14 11:27:06,913 | INFO | stage1 | Epoch 285 | train_loss=3.2104 | train_acc=0.9920 | test_loss=1.9276 | test_acc=0.9113
+2026-05-14 11:27:18,999 | INFO | stage1 | Epoch 286 | train_loss=3.5657 | train_acc=0.9907 | test_loss=1.9490 | test_acc=0.9197
+2026-05-14 11:27:30,961 | INFO | stage1 | Epoch 287 | train_loss=2.7489 | train_acc=0.9927 | test_loss=2.0223 | test_acc=0.9277
+2026-05-14 11:27:43,566 | INFO | stage1 | Epoch 288 | train_loss=2.6742 | train_acc=0.9930 | test_loss=2.1067 | test_acc=0.9118
+2026-05-14 11:27:57,169 | INFO | stage1 | Epoch 289 | train_loss=2.9117 | train_acc=0.9927 | test_loss=2.0282 | test_acc=0.9210
+2026-05-14 11:28:08,705 | INFO | stage1 | Epoch 290 | train_loss=2.6033 | train_acc=0.9935 | test_loss=2.2260 | test_acc=0.9314
+2026-05-14 11:28:21,066 | INFO | stage1 | Epoch 291 | train_loss=4.4388 | train_acc=0.9885 | test_loss=1.9435 | test_acc=0.9118
+2026-05-14 11:28:33,181 | INFO | stage1 | Epoch 292 | train_loss=2.2924 | train_acc=0.9943 | test_loss=1.8892 | test_acc=0.9192
+2026-05-14 11:28:46,639 | INFO | stage1 | Epoch 293 | train_loss=2.5708 | train_acc=0.9933 | test_loss=1.8449 | test_acc=0.9249
+2026-05-14 11:28:59,493 | INFO | stage1 | Epoch 294 | train_loss=2.6130 | train_acc=0.9931 | test_loss=2.1721 | test_acc=0.9107
+2026-05-14 11:29:11,405 | INFO | stage1 | Epoch 295 | train_loss=2.7087 | train_acc=0.9930 | test_loss=1.8912 | test_acc=0.9265
+2026-05-14 11:29:22,809 | INFO | stage1 | Epoch 296 | train_loss=3.3949 | train_acc=0.9911 | test_loss=2.1364 | test_acc=0.9004
+2026-05-14 11:29:35,246 | INFO | stage1 | Epoch 297 | train_loss=3.9848 | train_acc=0.9896 | test_loss=1.9023 | test_acc=0.9237
+2026-05-14 11:29:48,172 | INFO | stage1 | Epoch 298 | train_loss=2.2125 | train_acc=0.9943 | test_loss=1.8671 | test_acc=0.9300
+2026-05-14 11:29:59,741 | INFO | stage1 | Epoch 299 | train_loss=2.5745 | train_acc=0.9933 | test_loss=1.9554 | test_acc=0.9095
+2026-05-14 11:30:11,922 | INFO | stage1 | Epoch 300 | train_loss=3.2100 | train_acc=0.9923 | test_loss=2.2561 | test_acc=0.9155
+2026-05-14 11:30:19,904 | INFO | stage1 | Final train_eval_loss=3.4895 | train_eval_acc=0.9267
+2026-05-14 11:30:19,916 | INFO | Saved stage-1 checkpoint: runs/l_mnist_pipeline_20260514_102656/gfr_lmnist_stage1_shared.pt
+2026-05-14 11:30:22,275 | INFO | Stage-2 effective trainable params (recurrent-only target): 7434
+2026-05-14 11:30:22,458 | INFO | LSTM match | hidden_size=30 | trainable_params=7510 | target_params=7434
+2026-05-14 11:30:22,458 | INFO | RNN baseline | hidden_size=68 | trainable_params=7354
+2026-05-14 11:30:22,458 | INFO | Parallel run GPU pool: [0, 1, 2, 3, 5]
+2026-05-14 11:30:22,459 | INFO | Launching 15 repeated model runs with 5 worker(s). Progress JSON: runs/l_mnist_pipeline_20260514_102656/progress
+2026-05-14 13:20:03,623 | INFO | Completed stage2_run2 on GPU 1
+2026-05-14 13:21:38,914 | INFO | Completed stage2_run1 on GPU 0
+2026-05-14 13:32:12,320 | INFO | Completed stage2_run4 on GPU 3
+2026-05-14 13:34:06,571 | INFO | Completed stage2_run3 on GPU 2
+2026-05-14 13:36:58,736 | INFO | Completed stage2_run5 on GPU 5
+2026-05-14 14:03:42,211 | INFO | Completed rnn_run1 on GPU 0
+2026-05-14 14:08:32,675 | INFO | Completed rnn_run2 on GPU 1
+2026-05-14 14:12:53,106 | INFO | Completed rnn_run3 on GPU 2
+2026-05-14 14:14:21,454 | INFO | Completed rnn_run4 on GPU 3
+2026-05-14 14:18:54,425 | INFO | Completed rnn_run5 on GPU 5
+2026-05-14 14:49:56,154 | INFO | Completed lstm_run1 on GPU 0
+2026-05-14 14:59:11,527 | INFO | Completed lstm_run2 on GPU 1
+2026-05-14 15:01:05,515 | INFO | Completed lstm_run3 on GPU 2
+2026-05-14 15:03:06,752 | INFO | Completed lstm_run4 on GPU 3
+2026-05-14 15:07:40,287 | INFO | Completed lstm_run5 on GPU 5
+2026-05-14 15:07:46,251 | INFO | Saved results to runs/l_mnist_pipeline_20260514_102656
+2026-05-14 15:07:46,251 | INFO | Final | Stage-2 test acc mean/std: 0.9516 / 0.0079 | RNN: 0.8063 / 0.0731 | LSTM: 0.9684 / 0.0014
+2026-05-14 15:07:46,251 | INFO | Training pipeline complete

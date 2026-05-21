@@ -1,0 +1,12 @@
+2026-05-18 11:51:06,942 | INFO | Source run: runs/l_mnist_gfr_per_seed_20260515_100137
+2026-05-18 11:51:06,942 | INFO | Output directory: runs/l_mnist_stage1_rnn_param_match_20260518_115200
+2026-05-18 11:51:06,945 | INFO | GPU pool: [0, 1, 6]
+2026-05-18 11:51:06,945 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-18 11:51:06,946 | INFO | RNN hidden_dim=68 trainable_params=7354; matched Stage-1 GFR hidden_dim=65 trainable_params=7355
+2026-05-18 14:37:24,622 | INFO | Completed stage1_run2 on GPU 1
+2026-05-18 14:39:49,024 | INFO | Completed stage1_run3 on GPU 6
+2026-05-18 14:44:54,430 | INFO | Completed stage1_run1 on GPU 0
+2026-05-18 17:30:01,713 | INFO | Completed stage1_run4 on GPU 0
+2026-05-18 17:32:18,787 | INFO | Completed stage1_run5 on GPU 1
+2026-05-18 17:32:22,326 | INFO | Final | GFR-RNN test acc mean/std: 0.9342 / 0.0137 | RNN: 0.8063 / 0.0731
+2026-05-18 17:32:22,326 | INFO | Stage-1 parameter-matched run complete

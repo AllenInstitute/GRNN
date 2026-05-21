@@ -1,0 +1,1 @@
+python run_stage1_rnn_param_match.py --source-run-dir runs/l_mnist_gfr_per_seed_20260515_100137 --output-dir runs/l_mnist_stage1_rnn_param_match_20260518_000000 --gpu-ids 4,6

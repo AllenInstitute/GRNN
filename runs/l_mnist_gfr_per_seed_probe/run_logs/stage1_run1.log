@@ -1,0 +1,2 @@
+2026-05-15 10:02:11,915 | INFO | SpawnProcess-2 | stage1_run1 | assigned_gpu=4 | seed=1234
+2026-05-15 10:02:12,954 | INFO | SpawnProcess-2 | stage1_run1 | trainable_params=11534 | epochs=300

@@ -1,0 +1,1 @@
+/home/chyeung2/miniconda3/envs/pytorch-3.10/bin/python -u l_mnist_training_pipeline.py --output-dir runs/l_mnist_pipeline_20260514_102420 --gpu-ids 0\,2\,3\,5 

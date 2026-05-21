@@ -1,0 +1,5 @@
+2026-05-15 10:02:03,969 | INFO | Source baseline run: runs/l_mnist_pipeline_20260514_102656
+2026-05-15 10:02:03,969 | INFO | Output directory: runs/l_mnist_gfr_per_seed_probe
+2026-05-15 10:02:03,969 | INFO | GPU pool: [4, 5]
+2026-05-15 10:02:03,969 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-15 10:02:04,047 | INFO | Launching 5 Stage-1 reruns with 2 workers

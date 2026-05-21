@@ -1,0 +1,3 @@
+Model,Trainable Params,Train Acc Mean,Train Acc Std,Test Acc Mean,Test Acc Std
+GFR-RNN,7355,0.944913,0.013527,0.934200,0.013700
+RNN,7354,0.819720,0.072143,0.806280,0.073065

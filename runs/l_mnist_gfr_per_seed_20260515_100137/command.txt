@@ -1,0 +1,1 @@
+/home/chyeung2/miniconda3/envs/pytorch-3.10/bin/python -u rerun_gfr_per_seed_pipeline.py --source-run-dir runs/l_mnist_pipeline_20260514_102656 --output-dir runs/l_mnist_gfr_per_seed_20260515_100137 --gpu-ids 4,5

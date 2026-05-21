@@ -1,0 +1,3 @@
+Model,Trainable Params,Test Acc Mean,Test Acc Std
+GFR-RNN (Stage-2),5256,0.908220,0.017395
+LSTM (matched),5116,0.962780,0.006213

@@ -1,0 +1,5 @@
+2026-05-18 10:19:09,384 | INFO | Source run: runs/l_mnist_gfr_per_seed_20260515_100137
+2026-05-18 10:19:09,384 | INFO | Output directory: runs/l_mnist_stage1_rnn_param_match_20260518_000000
+2026-05-18 10:19:09,384 | INFO | GPU pool: [4, 6]
+2026-05-18 10:19:09,388 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-18 10:19:09,389 | INFO | RNN hidden_dim=68 trainable_params=7354; matched Stage-1 GFR hidden_dim=65 trainable_params=7355

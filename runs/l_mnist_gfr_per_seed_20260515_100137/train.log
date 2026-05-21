@@ -1,0 +1,18 @@
+2026-05-15 10:02:46,443 | INFO | Source baseline run: runs/l_mnist_pipeline_20260514_102656
+2026-05-15 10:02:46,443 | INFO | Output directory: runs/l_mnist_gfr_per_seed_20260515_100137
+2026-05-15 10:02:46,443 | INFO | GPU pool: [4, 5]
+2026-05-15 10:02:46,443 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
+2026-05-15 10:02:46,525 | INFO | Launching 5 Stage-1 reruns with 2 workers
+2026-05-15 12:05:42,504 | INFO | Completed stage1_run2 on GPU 5
+2026-05-15 12:08:26,011 | INFO | Completed stage1_run1 on GPU 4
+2026-05-15 14:09:32,315 | INFO | Completed stage1_run3 on GPU 4
+2026-05-15 14:10:58,657 | INFO | Completed stage1_run4 on GPU 5
+2026-05-15 15:30:04,892 | INFO | Completed stage1_run5 on GPU 4
+2026-05-15 15:30:08,458 | INFO | Launching 5 Stage-2 reruns with 2 workers
+2026-05-15 17:24:35,417 | INFO | Completed stage2_run2 on GPU 5
+2026-05-15 17:26:25,253 | INFO | Completed stage2_run1 on GPU 4
+2026-05-15 19:19:01,393 | INFO | Completed stage2_run3 on GPU 4
+2026-05-15 19:25:47,958 | INFO | Completed stage2_run4 on GPU 5
+2026-05-15 20:36:53,537 | INFO | Completed stage2_run5 on GPU 4
+2026-05-15 20:36:57,266 | INFO | Final | Stage-1 test acc mean/std: 0.9192 / 0.0287 | Stage-2: 0.9480 / 0.0091 | RNN copied: 0.8063 / 0.0731 | LSTM copied: 0.9684 / 0.0014
+2026-05-15 20:36:57,266 | INFO | GFR per-seed rerun complete

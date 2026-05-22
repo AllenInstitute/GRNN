@@ -1,0 +1,17 @@
+\begin{table}
+    \caption{Accuracy, final test loss, and predictive entropy on L-MNIST. Entropy is reported separately for correctly and incorrectly classified test samples.}
+    \label{tab:lmnist-accuracy-loss-entropy}
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lllllll}
+    \toprule
+    \textbf{Model} & \textbf{\# Params} & \textbf{Test Acc.} & \textbf{Final Test Loss} & \textbf{First Ent. Correct} & \textbf{First Ent. Incorrect} & \textbf{5-Readout Ent. Correct/Incorrect} \\
+    \midrule
+    GFR-RNN & 7355 & $0.934 \pm 0.014$ & $1.77 \pm 0.05$ & $0.022 \pm 0.004$ & $0.254 \pm 0.064$ & $0.321 \pm 0.053$ / $0.790 \pm 0.037$ \\
+    RNN & 7354 & $0.806 \pm 0.073$ & $2.51 \pm 0.14$ & $0.037 \pm 0.005$ & $0.188 \pm 0.041$ & $0.635 \pm 0.095$ / $0.849 \pm 0.038$ \\
+    SNN-LIF & 7354 & $0.932 \pm 0.007$ & $4.87 \pm 0.42$ & $0.167 \pm 0.019$ & $0.760 \pm 0.019$ & $0.231 \pm 0.030$ / $0.867 \pm 0.029$ \\
+    SNN-Synaptic & 7354 & $0.938 \pm 0.006$ & $4.14 \pm 0.32$ & $0.136 \pm 0.014$ & $0.690 \pm 0.031$ & $0.182 \pm 0.010$ / $0.807 \pm 0.007$ \\
+    \bottomrule
+    \end{tabular}%
+    }
+\end{table}

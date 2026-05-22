@@ -1,8 +1,10 @@
 {
-  "run_name": "rnn_run2",
-  "status": "complete",
-  "epoch": 300,
-  "epochs": 300,
+  "model_name": "rnn",
+  "run_idx": 2,
+  "seed": 1235,
+  "gpu_id": 0,
+  "trainable_params": 7354,
+  "checkpoint": "runs/l_mnist_rnn_checkpoint_rerun_20260521_a100_ckpt/rnn_run2.pt",
   "history": {
     "train_loss": [
       227.80218935012817,

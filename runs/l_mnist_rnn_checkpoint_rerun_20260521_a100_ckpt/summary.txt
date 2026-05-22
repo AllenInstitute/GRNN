@@ -1,0 +1,2 @@
+Model,Trainable Params,Train Acc Mean,Train Acc Std,Test Acc Mean,Test Acc Std
+RNN,7354,0.819720,0.072143,0.806280,0.073065

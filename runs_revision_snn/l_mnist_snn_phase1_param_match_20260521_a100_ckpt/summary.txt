@@ -1,0 +1,3 @@
+Model,Trainable Params,Train Acc Mean,Train Acc Std,Test Acc Mean,Test Acc Std
+SNN-LIF,7354,0.939947,0.006207,0.932300,0.006813
+SNN-Synaptic,7354,0.945010,0.004458,0.938260,0.005591

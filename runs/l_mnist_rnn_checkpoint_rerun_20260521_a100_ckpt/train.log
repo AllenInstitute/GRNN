@@ -4,3 +4,10 @@
 2026-05-21 10:48:22,563 | INFO | GPU pool: [0]
 2026-05-21 10:48:22,563 | INFO | Run seeds: [1234, 1235, 1236, 1237, 1238]
 2026-05-21 10:48:22,563 | INFO | RNN hidden_dim=68 trainable_params=7354 epochs=300
+2026-05-21 11:19:56,034 | INFO | Completed rnn_run1 on GPU 0
+2026-05-21 11:20:22,217 | INFO | Completed rnn_run2 on GPU 0
+2026-05-21 11:50:50,635 | INFO | Completed rnn_run3 on GPU 0
+2026-05-21 11:51:35,718 | INFO | Completed rnn_run4 on GPU 0
+2026-05-21 12:19:02,259 | INFO | Completed rnn_run5 on GPU 0
+2026-05-21 12:19:03,458 | INFO | Final | RNN test acc mean/std: 0.8063 / 0.0731
+2026-05-21 12:19:03,458 | INFO | RNN checkpoint rerun complete

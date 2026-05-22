@@ -1,5 +1,1 @@
-{
-  "RNN": "No checkpoint files found in runs/l_mnist_stage1_rnn_param_match_20260518_115200",
-  "SNN-LIF": "No checkpoint files found in runs_revision_snn/l_mnist_snn_phase1_param_match_20260520_171817",
-  "SNN-Synaptic": "No checkpoint files found in runs_revision_snn/l_mnist_snn_phase1_param_match_20260520_171817"
-}
+{}

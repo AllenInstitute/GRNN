@@ -1,0 +1,1 @@
+cd /home/chyeung2/Documents/GRNN && /home/chyeung2/miniconda3/envs/pytorch-3.10/bin/python -u run_bio_lmnist_table.py --parallel --gpu-ids 0,1,2,4,5,6,7 --runs 5 --rows random,bio_trainable,bio_frozen --output-dir /home/chyeung2/Documents/GRNN/runs/l_mnist_bio_table_parallel_20260527_110711

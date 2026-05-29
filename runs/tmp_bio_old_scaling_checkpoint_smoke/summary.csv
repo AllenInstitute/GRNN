@@ -1,0 +1,2 @@
+row,init,freeze_params,trainable_params_mean,trainable_params_std,test_acc_mean,test_acc_std,test_accs
+bio_trainable,Biological,No,23562.0,0.0,0.384,0.0,0.384000

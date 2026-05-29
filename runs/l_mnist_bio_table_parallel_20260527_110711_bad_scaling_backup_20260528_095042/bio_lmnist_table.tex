@@ -1,0 +1,14 @@
+\begin{table}[htp]
+    \caption{Test accuracy on L-MNIST for GFR-RNNs with 128 hidden units. Results report mean $\pm$ standard deviation over five random seeds.}
+    \label{tab:bio-lmnist-reproduced}
+    \centering
+    \begin{tabular}{llll}
+    \toprule
+    \textbf{Init.} & \textbf{Freeze Params.} & \textbf{Trainable Params.} & \textbf{Test Acc.} \\
+    \midrule
+    Random & No & 22538 & $0.880 \pm 0.067$ \\
+    Biological & No & 23562 & $0.114 \pm 0.000$ \\
+    Biological & Yes & 21514 & $0.114 \pm 0.000$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}

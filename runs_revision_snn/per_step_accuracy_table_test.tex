@@ -1,0 +1,16 @@
+\begin{table}[t]
+    \caption{Per-step readout accuracy on the L-MNIST test set (mean $\pm$ std over 5 runs).}
+    \label{tab:per-step-accuracy-test}
+    \centering
+    \small
+    \begin{tabular}{lcccccc}
+    \toprule
+    \textbf{Model} & \textbf{Step 1} & \textbf{Step 2} & \textbf{Step 3} & \textbf{Step 4} & \textbf{Step 5} & \textbf{Vote (1--5)} \\
+    \midrule
+    GFR-RNN & $0.979 \pm 0.001$ & $0.971 \pm 0.003$ & $0.923 \pm 0.017$ & $0.809 \pm 0.038$ & $0.628 \pm 0.066$ & $0.934 \pm 0.014$ \\
+    RNN & $0.969 \pm 0.001$ & $0.937 \pm 0.023$ & $0.770 \pm 0.086$ & $0.467 \pm 0.104$ & $0.242 \pm 0.091$ & $0.806 \pm 0.073$ \\
+    SNN-LIF & $0.935 \pm 0.007$ & $0.933 \pm 0.007$ & $0.927 \pm 0.008$ & $0.919 \pm 0.008$ & $0.904 \pm 0.009$ & $0.932 \pm 0.007$ \\
+    SNN-Synaptic & $0.939 \pm 0.006$ & $0.939 \pm 0.006$ & $0.934 \pm 0.005$ & $0.923 \pm 0.006$ & $0.906 \pm 0.011$ & $0.938 \pm 0.006$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}

@@ -1,4 +1,29 @@
 # Generalized Firing Rate Neurons
+
+This repository is the resource release accompanying the GFR (Generalized Firing
+Rate) neuron paper. Its **primary deliverable is a dataset of fitted GFR neuron
+models** derived from the Allen Institute Cell Types electrophysiology database,
+together with the code needed to load, use, and reproduce them. The trained
+network experiments and analyses below are built on top of that resource.
+
+### Repository contents
+
+**Resource — the distributed dataset (this is what the paper provides):**
+- `model/gfr_dataset.json` — fitted GFR model parameters for every qualifying cell across six (bin size, activation bin size) configurations. Load with `utils.df_from_json` (see [Loading the dataset](#loading-the-dataset)).
+- `model/best_params.pickle` — the raw best-fit parameters behind the dataset.
+- `data/metadata.csv`, `data/labels.pickle` — per-cell metadata (cre-line, species, layer, …) and labels.
+- `images/` — the schematic and example-database screenshots used below.
+
+**Core code — model, fitting, and reproduction pipelines:**
+- `model.py`, `network.py`, `snn_network.py`, `utils.py`, `data.py`, `config.py`, `evaluate.py`, `train.py`
+- `preprocess_pipeline.py`, `model_pipeline.py`, `network_pipeline.py`, `snn_pipeline.py`
+- `configs/` — training configurations.
+
+**Revision results and analyses (added in this revision, built on the resource):**
+- `results/` — frozen artifacts and checkpoints backing the manuscript's quantitative L-MNIST tables (per-step accuracy across GFR-RNN / RNN / SNN, and biological-vs-random initialization). See [`results/README.md`](results/README.md).
+- `species_analysis/` — human vs. mouse GFR-parameter comparison (figure + statistics). See [`species_analysis/README.md`](species_analysis/README.md).
+- Notebooks: `cluster.ipynb` and `cluster-split-test.ipynb` (parameter clustering and the split-half relative-importance robustness analysis), `activation_benchmark.ipynb` (activation-function comparison), `appendix_gfr_rnn_vs_snn.ipynb` (GFR-RNN vs. SNN appendix), `data_visualization.ipynb`.
+
 ## The GFR Model
 ![schematic](images/schematic.png)
 The GFR model models the firing rate of a neuron as
@@ -164,11 +189,47 @@ This trains a GFR-RNN with 64 hidden neurons, default initialization, learnable 
 #### Note on `bio_units`
 The GFR model includes a `bio_units` flag that controls the scaling of the recurrent feedback term ($\beta$). When `bio_units=True` (default), firing rates are scaled by a factor of 1000 to convert from spikes/ms to Hz, which is appropriate for biological neuron fitting. When `bio_units=False`, no scaling is applied, which is appropriate for abstract tasks like sequential MNIST where inputs are unitless. The `network_pipeline.py` script uses `bio_units=False` for L-MNIST training.
 
-### Comparing GFR-RNN with Spiking Neural Networks
-To run a controlled comparison between a GFR-RNN and spiking neural networks (SNN) with surrogate backpropagation on sequential MNIST, run
+### Per-step readout accuracy and initialization studies (manuscript tables)
+
+The manuscript's quantitative L-MNIST comparisons are produced by a set of
+from-scratch, parameter-matched training and evaluation scripts. Their frozen
+outputs, rendered tables, and trained checkpoints are archived under `results/`
+(see [`results/README.md`](results/README.md) for the full artifact-to-table
+mapping and per-artifact regeneration commands).
+
+**Per-step accuracy — GFR-RNN vs. RNN vs. SNN** (Table `tab:per-step-accuracy`).
+Four models are trained from scratch at a matched (~7.3k) parameter budget and
+evaluated with per-step and majority-vote readouts:
+```
+python run_stage1_rnn_param_match.py   # GFR-RNN (hidden 65)
+python run_rnn_checkpoint_rerun.py     # vanilla RNN (hidden 68)
+python run_snn_phase1_param_match.py   # SNN-LIF and SNN-Synaptic (hidden 68)
+python eval_single_step_accuracy.py    # -> results/per_step_accuracy/
+```
+
+**Biological vs. random initialization** (Table `tab:bio-init-per-step-percent`).
+128-unit GFR-RNNs are initialized with random or biological GFR parameters, under
+trainable vs. frozen recurrent dynamics:
+```
+python reproduce_bio_init_table.py       # -> results/bio_init/results.json (+ checkpoints)
+python generate_bio_init_latex_table.py  # -> results/bio_init/bio_init_per_step_table_percent.tex
+```
+
+**Activation-function comparison** (Table `tab:acti-compare`) is produced inline
+by `activation_benchmark.ipynb`.
+
+### Optional: standalone GFR-RNN vs. SNN demo
+
+`compare_models.py` is a self-contained script that trains and compares a
+GFR-RNN against spiking baselines in a single run. It is provided as a quick,
+reproducible demonstration; the manuscript's Table `tab:per-step-accuracy` is
+produced by the parameter-matched pipeline above, not by this script. To run the
+demo:
 ```
 python compare_models.py --epochs 300 --hidden_dim 64 --batch_size 128 --lr 1e-3 --variant l --seed 42
 ```
+
+For a notebook version of the same benchmark that renders the summary inline and saves appendix-ready artifacts, open `appendix_gfr_rnn_vs_snn.ipynb` from the repo root. The notebook calls the shared comparison code, writes checkpoints and a JSON summary for the run, and also saves a CSV table plus PNG figures under `paper_submission/appendix_outputs/<run_name>/`.
 
 This trains three models with identical architecture, data splits, training protocol, and evaluation:
 
@@ -179,6 +240,56 @@ This trains three models with identical architecture, data splits, training prot
 | SNN-Synaptic | Synaptic LIF | 2nd-order spiking neuron with synaptic current and membrane potential decays |
 
 All models share the same recurrent architecture: `Linear(28→H) → Linear(H→H, recurrent) → neuron layer → Linear(H→10)`, trained with Adam, CrossEntropyLoss, and gradient clipping at 5. Evaluation uses 5 zero-input readout steps with softmax-averaged predictions.
+
+#### SNN neuron models
+
+Both SNN baselines use the same network-level input current at each timestep $t$:
+
+```math
+I[t] = W_1 \, x[t] + W_2 \, S[t-1]
+```
+
+where $W_1 \in \mathbb{R}^{H \times d}$ is the feedforward weight, $W_2 \in \mathbb{R}^{H \times H}$ is the recurrent weight, $x[t]$ is the input (one row of the image), and $S[t-1]$ is the previous spike vector.
+
+**SNN-LIF** updates a single membrane potential with a fixed decay $\beta$:
+
+```math
+U[t] = \beta \, U[t-1] + I[t] - S[t-1] \, U_{\mathrm{thr}}
+```
+
+```math
+S[t] = \Theta(U[t] - U_{\mathrm{thr}})
+```
+
+where $\beta = 0.95$ is a fixed decay rate, $U_{\mathrm{thr}} = 1$ is the firing threshold, and $\Theta$ is the Heaviside step function. The subtraction of $S[t-1] \, U_{\mathrm{thr}}$ implements a reset-by-subtraction mechanism.
+
+**SNN-Synaptic** adds a synaptic current state $I_{\mathrm{syn}}$ with its own decay $\alpha$, giving each neuron two time constants:
+
+```math
+I_{\mathrm{syn}}[t] = \alpha \, I_{\mathrm{syn}}[t-1] + W_1 \, x[t] + W_2 \, S[t-1]
+```
+
+```math
+U[t] = \beta \, U[t-1] + I_{\mathrm{syn}}[t] - S[t-1] \, U_{\mathrm{thr}}
+```
+
+```math
+S[t] = \Theta(U[t] - U_{\mathrm{thr}})
+```
+
+where $\alpha = 0.9$ and $\beta = 0.95$ are both fixed hyperparameters.
+
+In both cases, the readout is $\hat{y}[t] = W_3 \, S[t] + b_3$ where $W_3 \in \mathbb{R}^{10 \times H}$.
+
+#### Surrogate gradient training
+
+The Heaviside $\Theta$ has zero gradient almost everywhere, which blocks standard backpropagation through the spike function. Both SNN models use **surrogate gradients**: the forward pass uses hard discrete spikes, but during the backward pass $\frac{\partial S}{\partial U}$ is replaced with the smooth ATan surrogate:
+
+```math
+\frac{\partial S}{\partial U} \approx \frac{1}{\pi} \cdot \frac{1}{1 + \left(\pi \, (U - U_{\mathrm{thr}})\right)^2}
+```
+
+All other gradient computations are standard backpropagation through time (BPTT). In contrast, GFR-RNN uses a smooth, differentiable activation $g$ and requires no surrogate approximation.
 
 #### Fair parameter matching
 When using the same hidden dimension, GFR-RNN has slightly more trainable parameters than the SNN baselines because each GFR neuron contains learnable multi-timescale coefficients ($\alpha_i$, $\beta_i$ for each of $n$ timescales), whereas SNN neuron decay rates are fixed hyperparameters. Concretely, with `hidden_dim=64` the GFR-RNN has 7,178 trainable parameters while both SNN models have 6,666 — a difference of 512 parameters (64 neurons × 4 timescales × 2 coefficients).
@@ -192,3 +303,16 @@ The SNN baselines use [snntorch](https://github.com/jeshraghian/snntorch) and re
 ```
 pip install snntorch
 ```
+
+### Human vs. mouse species analysis
+
+The `species_analysis/` folder reproduces the human-vs-mouse comparison of fitted
+GFR parameters (the manuscript's species figure and its statistical tests)
+directly from the distributed resource (`model/best_params.pickle` and
+`data/metadata.csv`):
+```
+python species_analysis/extract_gfr_params.py       # -> species_analysis/data/human_vs_mouse_gfr_params.csv
+python species_analysis/statistical_tests.py        # -> species_analysis/data/statistical_tests_summary.csv
+python species_analysis/make_figure_human_mouse.py  # -> species_analysis/figures/fig_human_mouse_v2.{pdf,png}
+```
+See [`species_analysis/README.md`](species_analysis/README.md) for details.

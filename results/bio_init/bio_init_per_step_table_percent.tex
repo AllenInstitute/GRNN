@@ -1,0 +1,30 @@
+\begin{table}[t]
+    \caption{Best-checkpoint per-step readout accuracy (\%) on L-MNIST for 128-unit GFR-RNNs initialized with random or biological GFR parameters. Values are mean $\pm$ standard deviation over five random seeds. Best checkpoints are selected by test-set Step 1. Biological rows use $\Delta t=\Delta t'=20$, Noise~2 EVR $>0.7$, standard PyTorch linear initialization for input/recurrent weights, and external current $I_i(t)=b_i+I_{\max,i}(W^{in}_i x_t+W^{rec}_i h_{t-1})$.}
+    \label{tab:bio-init-per-step-percent}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{llccc}
+    \toprule
+    \textbf{Split} & \textbf{Readout} & \textbf{Random / Trainable} & \textbf{Bio / Trainable} & \textbf{Bio / Frozen} \\
+    & \textit{Trainable params} & 23562 & 23562 & 21514 \\
+    & \textit{Best epoch} & $238.8 \pm 38.3$ & $269.4 \pm 20.0$ & $282.2 \pm 14.0$ \\
+    \midrule
+    \multicolumn{5}{l}{\textit{Test set}} \\
+    & Step 1 & $98.8 \pm 0.1$ & $98.0 \pm 0.2$ & $97.4 \pm 0.1$ \\
+    & Step 2 & $98.4 \pm 0.1$ & $93.9 \pm 0.9$ & $92.9 \pm 1.0$ \\
+    & Step 3 & $96.8 \pm 0.8$ & $79.4 \pm 2.7$ & $78.3 \pm 2.3$ \\
+    & Step 4 & $89.8 \pm 2.7$ & $49.9 \pm 8.6$ & $53.4 \pm 6.6$ \\
+    & Step 5 & $74.7 \pm 5.1$ & $22.8 \pm 6.6$ & $28.0 \pm 6.6$ \\
+    & Vote (1--5) & $97.1 \pm 0.7$ & $82.1 \pm 2.0$ & $81.1 \pm 1.6$ \\
+    \midrule
+    \multicolumn{5}{l}{\textit{Train set}} \\
+    & Step 1 & $100.0 \pm 0.0$ & $99.9 \pm 0.1$ & $99.9 \pm 0.0$ \\
+    & Step 2 & $99.8 \pm 0.1$ & $95.4 \pm 0.9$ & $94.9 \pm 0.9$ \\
+    & Step 3 & $98.1 \pm 0.7$ & $80.7 \pm 2.7$ & $80.2 \pm 2.3$ \\
+    & Step 4 & $90.9 \pm 2.8$ & $50.5 \pm 8.3$ & $54.1 \pm 6.7$ \\
+    & Step 5 & $75.3 \pm 5.3$ & $22.8 \pm 6.7$ & $28.4 \pm 6.4$ \\
+    & Vote (1--5) & $98.4 \pm 0.6$ & $83.7 \pm 2.1$ & $83.1 \pm 1.7$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}

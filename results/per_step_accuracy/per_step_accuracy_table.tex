@@ -1,0 +1,29 @@
+\begin{table}[t]
+    \caption{Per-step readout accuracy (\%) on the L-MNIST task (mean $\pm$ std over 5 runs).}
+    \label{tab:per-step-accuracy}
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Readout Step} & \textbf{GFR-RNN} & \textbf{RNN} & \textbf{SNN-LIF} & \textbf{SNN-Synaptic} \\
+    \midrule
+    \multicolumn{5}{l}{\textit{Test set}} \\
+    \midrule
+    Step 1 & $97.9 \pm 0.1$ & $96.9 \pm 0.1$ & $93.5 \pm 0.7$ & $93.9 \pm 0.6$ \\
+    Step 2 & $97.1 \pm 0.3$ & $93.7 \pm 2.3$ & $93.3 \pm 0.7$ & $93.9 \pm 0.6$ \\
+    Step 3 & $92.3 \pm 1.7$ & $77.0 \pm 8.6$ & $92.7 \pm 0.8$ & $93.4 \pm 0.5$ \\
+    Step 4 & $80.9 \pm 3.8$ & $46.7 \pm 10.4$ & $91.9 \pm 0.8$ & $92.3 \pm 0.6$ \\
+    Step 5 & $62.8 \pm 6.6$ & $24.2 \pm 9.1$ & $90.4 \pm 0.9$ & $90.6 \pm 1.1$ \\
+    Vote (1--5) & $93.4 \pm 1.4$ & $80.6 \pm 7.3$ & $93.2 \pm 0.7$ & $93.8 \pm 0.6$ \\
+    \midrule
+    \multicolumn{5}{l}{\textit{Train set}} \\
+    \midrule
+    Step 1 & $99.3 \pm 0.1$ & $98.3 \pm 0.1$ & $94.3 \pm 0.6$ & $94.7 \pm 0.5$ \\
+    Step 2 & $98.1 \pm 0.4$ & $94.9 \pm 2.3$ & $94.1 \pm 0.6$ & $94.6 \pm 0.5$ \\
+    Step 3 & $93.2 \pm 1.9$ & $78.2 \pm 8.6$ & $93.5 \pm 0.7$ & $94.0 \pm 0.5$ \\
+    Step 4 & $82.0 \pm 3.8$ & $48.0 \pm 11.4$ & $92.5 \pm 0.8$ & $92.8 \pm 0.7$ \\
+    Step 5 & $64.1 \pm 6.6$ & $24.8 \pm 9.9$ & $91.0 \pm 1.0$ & $91.0 \pm 1.1$ \\
+    Vote (1--5) & $94.5 \pm 1.4$ & $82.0 \pm 7.2$ & $94.0 \pm 0.6$ & $94.5 \pm 0.5$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}

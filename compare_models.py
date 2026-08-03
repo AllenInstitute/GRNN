@@ -112,6 +112,156 @@ def evaluate(model, data_loader, variant, device):
     return (correct / total).item()
 
 
+def set_random_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def run_comparison(
+    hidden_dim=64,
+    epochs=300,
+    lr=1e-3,
+    batch_size=128,
+    variant="l",
+    seed=42,
+    beta=0.95,
+    alpha=0.9,
+    snn_hidden_dim=None,
+    save_dir="model/network_params",
+    run_name=None,
+):
+    """Train and compare GFR-RNN, SNN-LIF, and SNN-Synaptic on sequential MNIST."""
+    if snn_hidden_dim is None:
+        snn_hidden_dim = hidden_dim
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    in_dim = 1 if variant == "p" else 28
+    out_dim = 10
+    save_dir = os.fspath(save_dir)
+    os.makedirs(save_dir, exist_ok=True)
+
+    config = {
+        "hidden_dim": hidden_dim,
+        "snn_hidden_dim": snn_hidden_dim,
+        "epochs": epochs,
+        "lr": lr,
+        "batch_size": batch_size,
+        "variant": variant,
+        "seed": seed,
+        "beta": beta,
+        "alpha": alpha,
+        "save_dir": save_dir,
+        "run_name": run_name,
+    }
+
+    print(f"Device: {device}")
+    print(
+        f"Config: hidden_dim={hidden_dim}, snn_hidden_dim={snn_hidden_dim}, "
+        f"epochs={epochs}, lr={lr}, batch_size={batch_size}, "
+        f"variant={variant}, seed={seed}\n"
+    )
+
+    train_loader, test_loader = get_mnist_loaders(
+        batch_size, variant=variant, seed=seed
+    )
+
+    models = {
+        "GFR-RNN": Network(
+            in_dim, hidden_dim, out_dim,
+            freeze_neurons=False, freeze_g=True, device=device,
+            bio_units=False,
+        ),
+        "SNN-LIF": SNNNetwork(
+            in_dim, snn_hidden_dim, out_dim,
+            beta=beta, device=device,
+        ),
+        "SNN-Synaptic": SNNNetworkSynaptic(
+            in_dim, snn_hidden_dim, out_dim,
+            alpha=alpha, beta=beta, device=device,
+        ),
+    }
+
+    results = {}
+    checkpoint_paths = {}
+
+    summary_stem = run_name or f"comparison_{variant}_{hidden_dim}"
+
+    for name, model in models.items():
+        model = model.to(device)
+        n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"{'='*60}")
+        print(f"Training {name}  ({n_params} trainable params)")
+        print(f"{'='*60}")
+
+        set_random_seed(seed)
+
+        train_loader, _ = get_mnist_loaders(
+            batch_size, variant=variant, seed=seed
+        )
+
+        losses = train_network(
+            model, train_loader,
+            epochs=epochs, lr=lr,
+            variant=variant, device=device,
+        )
+
+        train_acc = evaluate(model, train_loader, variant, device)
+        test_acc = evaluate(model, test_loader, variant, device)
+        print(f"  ➜ Train acc: {train_acc:.4f} | Test acc: {test_acc:.4f}\n")
+
+        results[name] = {
+            "trainable_params": n_params,
+            "train_accuracy": train_acc,
+            "test_accuracy": test_acc,
+            "losses": losses,
+        }
+
+        tag = name.lower().replace("-", "_")
+        checkpoint_stem = (
+            f"{summary_stem}_{tag}" if run_name else f"compare_{tag}_{variant}_{hidden_dim}"
+        )
+        ckpt_path = os.path.join(save_dir, f"{checkpoint_stem}.pt")
+        torch.save({
+            "model_state_dict": model.cpu().state_dict(),
+            **results[name],
+            "config": config,
+        }, ckpt_path)
+        checkpoint_paths[name] = ckpt_path
+        model.to(device)
+
+    print("\n" + "="*72)
+    print(
+        f"  COMPARISON TABLE  (variant={variant}, hidden={hidden_dim}, "
+        f"epochs={epochs}, lr={lr})"
+    )
+    print("="*72)
+    print(f"{'Model':<18} {'Params':>8} {'Train Acc':>11} {'Test Acc':>11}")
+    print("-"*50)
+    for name, result in results.items():
+        print(
+            f"{name:<18} {result['trainable_params']:>8} "
+            f"{result['train_accuracy']:>10.4f} {result['test_accuracy']:>10.4f}"
+        )
+    print("-"*50)
+
+    json_path = os.path.join(save_dir, f"{summary_stem}.json")
+    payload = {
+        "config": config,
+        "results": results,
+        "artifacts": {
+            "summary_path": json_path,
+            "checkpoint_paths": checkpoint_paths,
+        },
+    }
+    with open(json_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    print(f"\nResults saved to {json_path}")
+
+    return payload
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  Main
 # ═══════════════════════════════════════════════════════════════════════════
@@ -127,122 +277,24 @@ def main():
     parser.add_argument("--alpha",      type=float, default=0.9,  help="Synaptic current decay")
     parser.add_argument("--snn_hidden_dim", type=int, default=None,
                         help="Hidden dim for SNN models (default: same as --hidden_dim)")
+    parser.add_argument("--save_dir", type=str, default="model/network_params",
+                        help="Directory used to save comparison checkpoints and JSON summary")
+    parser.add_argument("--run_name", type=str, default=None,
+                        help="Optional artifact stem to prevent overwriting previous runs")
     args = parser.parse_args()
-    if args.snn_hidden_dim is None:
-        args.snn_hidden_dim = args.hidden_dim
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    in_dim = 1 if args.variant == "p" else 28
-    out_dim = 10
-
-    print(f"Device: {device}")
-    print(f"Config: hidden_dim={args.hidden_dim}, snn_hidden_dim={args.snn_hidden_dim}, "
-          f"epochs={args.epochs}, lr={args.lr}, "
-          f"batch_size={args.batch_size}, variant={args.variant}, seed={args.seed}\n")
-
-    # ── Same data for all models (seeded shuffle) ──────────────────────
-    train_loader, test_loader = get_mnist_loaders(
-        args.batch_size, variant=args.variant, seed=args.seed
+    run_comparison(
+        hidden_dim=args.hidden_dim,
+        epochs=args.epochs,
+        lr=args.lr,
+        batch_size=args.batch_size,
+        variant=args.variant,
+        seed=args.seed,
+        beta=args.beta,
+        alpha=args.alpha,
+        snn_hidden_dim=args.snn_hidden_dim,
+        save_dir=args.save_dir,
+        run_name=args.run_name,
     )
-
-    # ── Define all models ──────────────────────────────────────────────
-    # GFR-RNN: neuron a,b are trainable, activation g is frozen.
-    # Matches paper Appendix C.1: default init (Section 3.4), 300 epochs.
-    models = {
-        "GFR-RNN": Network(
-            in_dim, args.hidden_dim, out_dim,
-            freeze_neurons=False, freeze_g=True, device=device,
-            bio_units=False,
-        ),
-        "SNN-LIF": SNNNetwork(
-            in_dim, args.snn_hidden_dim, out_dim,
-            beta=args.beta, device=device,
-        ),
-        "SNN-Synaptic": SNNNetworkSynaptic(
-            in_dim, args.snn_hidden_dim, out_dim,
-            alpha=args.alpha, beta=args.beta, device=device,
-        ),
-    }
-
-    results = {}
-    save_dir = "model/network_params"
-    os.makedirs(save_dir, exist_ok=True)
-
-    for name, model in models.items():
-        model = model.to(device)
-        n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        print(f"{'='*60}")
-        print(f"Training {name}  ({n_params} trainable params)")
-        print(f"{'='*60}")
-
-        # Fix random seed before each training run for reproducibility
-        torch.manual_seed(args.seed)
-        np.random.seed(args.seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(args.seed)
-
-        # Re-create loader to get same shuffle order for each model
-        train_loader, _ = get_mnist_loaders(
-            args.batch_size, variant=args.variant, seed=args.seed
-        )
-
-        losses = train_network(
-            model, train_loader,
-            epochs=args.epochs, lr=args.lr,
-            variant=args.variant, device=device,
-        )
-
-        train_acc = evaluate(model, train_loader, args.variant, device)
-        test_acc  = evaluate(model, test_loader,  args.variant, device)
-        print(f"  ➜ Train acc: {train_acc:.4f} | Test acc: {test_acc:.4f}\n")
-
-        results[name] = {
-            "trainable_params": n_params,
-            "train_accuracy": train_acc,
-            "test_accuracy": test_acc,
-            "losses": losses,
-        }
-
-        # Save individual checkpoint
-        tag = name.lower().replace("-", "_")
-        ckpt_path = os.path.join(
-            save_dir, f"compare_{tag}_{args.variant}_{args.hidden_dim}.pt"
-        )
-        torch.save({
-            "model_state_dict": model.cpu().state_dict(),
-            **results[name],
-            "config": vars(args),
-        }, ckpt_path)
-        model.to(device)  # move back for any further use
-
-    # ── Print comparison table ─────────────────────────────────────────
-    print("\n" + "="*72)
-    print(f"  COMPARISON TABLE  (variant={args.variant}, hidden={args.hidden_dim}, "
-          f"epochs={args.epochs}, lr={args.lr})")
-    print("="*72)
-    print(f"{'Model':<18} {'Params':>8} {'Train Acc':>11} {'Test Acc':>11}")
-    print("-"*50)
-    for name, r in results.items():
-        print(f"{name:<18} {r['trainable_params']:>8} "
-              f"{r['train_accuracy']:>10.4f} {r['test_accuracy']:>10.4f}")
-    print("-"*50)
-
-    # ── Save full results as JSON ──────────────────────────────────────
-    json_path = os.path.join(
-        save_dir, f"comparison_{args.variant}_{args.hidden_dim}.json"
-    )
-    # Convert non-serializable types
-    results_serializable = {}
-    for name, r in results.items():
-        results_serializable[name] = {
-            "trainable_params": r["trainable_params"],
-            "train_accuracy": r["train_accuracy"],
-            "test_accuracy": r["test_accuracy"],
-            "losses": r["losses"],
-        }
-    with open(json_path, "w") as f:
-        json.dump({"config": vars(args), "results": results_serializable}, f, indent=2)
-    print(f"\nResults saved to {json_path}")
 
 
 if __name__ == "__main__":

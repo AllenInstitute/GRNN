@@ -1,6 +1,12 @@
 allensdk
 matplotlib
-scikit-learn
-torch
-torchvision
+numpy
 pandas
+scikit-learn
+scipy
+seaborn
+snntorch
+torch
+torcheval
+torchvision
+tqdm

@@ -1,11 +1,25 @@
 
 .DS_Store
 .ipynb_checkpoints/
-data/
-figures/
 __pycache__/
 *.backup
-model/
-model/params/*
-misc/
-cell_types/
+
+# --- Generated / scratch / large downloadable content (not resources) ---
+# Anchored to repo root so nested subproject dirs (species_analysis/data,
+# species_analysis/figures, results/) are unaffected and stay tracked.
+/figures/
+/misc/
+/cell_types/
+/paper_submission/
+/tmp_merge_smoke/
+
+# --- data/ and model/ hold the committed RESOURCE deliverables. ---
+# Ignore the bulky / downloadable / per-cell intermediate contents, but
+# EXPLICITLY keep the distributed resource files tracked. Do not remove
+# the negations below: these files ARE the resource this paper provides.
+/data/*
+!/data/metadata.csv
+!/data/labels.pickle
+/model/*
+!/model/best_params.pickle
+!/model/gfr_dataset.json

@@ -54,4 +54,4 @@ species statistics mentioned in the text — the inhibitory **subclass** breakdo
 (Pvalb-like / Sst-like maximum firing rate γ) and the **classifier** results
 (logistic-regression species ROC-AUC, and the excitatory-vs-inhibitory
 mouse→human transfer ROC-AUC) — come from the broader author-reviewed,
-AI-assisted analysis and are not vendored here.
+AI-assisted analysis.

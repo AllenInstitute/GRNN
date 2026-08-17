@@ -160,7 +160,7 @@ where
     - Allowed values: 20, 100
 - `[degree]`: degree of the polynomial in the activation function.
     - Default: 1
-- `[C]`: constant for L1 regularization on the GFR model.
+- `[C]`: constant for L0 regularization on the GFR model.
     - Default: 0
 - `[save_path]`: path to save folder for models.
     - Default: `model/params/`
